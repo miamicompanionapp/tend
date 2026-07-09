@@ -1,0 +1,70 @@
+import type { Goal, CalendarEvent } from "../types";
+
+export const seedGoals: Goal[] = [
+  {
+    id: "goal-work",
+    title: "Work",
+    kind: "fixed",
+    category: "work",
+    priority: "high",
+    cadence: "Mon-Fri, 9:00-17:00",
+  },
+  {
+    id: "goal-exercise",
+    title: "Exercise",
+    kind: "recurring",
+    category: "health",
+    priority: "medium",
+    cadence: "3x per week",
+    timePreference: "any",
+    durationMinutes: 45,
+  },
+  {
+    id: "goal-biking",
+    title: "Biking",
+    kind: "recurring",
+    category: "health",
+    priority: "medium",
+    cadence: "1x per week",
+    timePreference: "weekend, daylight",
+    durationMinutes: 90,
+  },
+  {
+    id: "goal-dog-nails",
+    title: "Trim dog's nails",
+    kind: "recurring",
+    category: "home",
+    priority: "low",
+    cadence: "1x per week",
+    durationMinutes: 15,
+  },
+  {
+    id: "goal-tidy",
+    title: "Tidy room",
+    kind: "recurring",
+    category: "home",
+    priority: "low",
+    cadence: "daily",
+    timePreference: "evening",
+    durationMinutes: 15,
+  },
+  {
+    id: "goal-dinner-wife",
+    title: "Dinner with wife",
+    kind: "flexible",
+    category: "social",
+    priority: "high",
+    cadence: "1x per month",
+    timePreference: "evening",
+    durationMinutes: 120,
+  },
+];
+
+export const seedEvents: CalendarEvent[] = [
+  { id: "ev-1", title: "Breakfast", category: "human", date: "2026-07-09", startTime: "07:30", durationMinutes: 30, autoAdded: true },
+  { id: "ev-2", goalId: "goal-work", title: "Work", category: "work", date: "2026-07-09", startTime: "09:00", durationMinutes: 480, locked: true },
+  { id: "ev-3", title: "Lunch", category: "human", date: "2026-07-09", startTime: "12:30", durationMinutes: 30, autoAdded: true },
+  { id: "ev-4", goalId: "goal-exercise", title: "Exercise — run", category: "health", date: "2026-07-09", startTime: "17:30", durationMinutes: 45 },
+  { id: "ev-5", title: "Dinner", category: "human", date: "2026-07-09", startTime: "19:00", durationMinutes: 45, autoAdded: true },
+  { id: "ev-6", goalId: "goal-tidy", title: "Tidy room", category: "home", date: "2026-07-09", startTime: "20:00", durationMinutes: 15 },
+];
