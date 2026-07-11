@@ -11,7 +11,8 @@ import type { PlanDiffEntry } from "./types";
 
 function App() {
   const [tab, setTab] = useState<TabId>("today");
-  const { goals, events, addGoal, removeGoal, applyEvents, regeneratePlan, planLoading, planError } = usePlanner();
+  const { goals, events, quality, setQuality, addGoal, removeGoal, applyEvents, regeneratePlan, planLoading, planError } =
+    usePlanner();
 
   const weekStart = useMemo(() => toISODate(getMonday(new Date())), []);
   const today = todayISODate();
@@ -33,28 +34,40 @@ function App() {
     <div className="app-shell">
       <div className="app-bar">
         <span className="app-name">Tend</span>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-          {(tab === "today" || tab === "week") && (
-            <button
-              onClick={() => regeneratePlan()}
-              disabled={planLoading}
-              style={{
-                border: "none",
-                background: "none",
-                color: "var(--accent)",
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: planLoading ? "default" : "pointer",
-                padding: 0,
-                opacity: planLoading ? 0.5 : 1,
-              }}
-            >
-              {planLoading ? "Planning…" : "↻ Regenerate"}
-            </button>
-          )}
-          <span className="app-subtitle">{subtitle}</span>
-        </div>
+        <span className="app-subtitle">{subtitle}</span>
       </div>
+      {(tab === "today" || tab === "week") && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px 10px", gap: 10 }}>
+          <div className="quality-toggle">
+            <button className={quality === "careful" ? "active" : ""} onClick={() => setQuality("careful")}>
+              Careful
+            </button>
+            <button className={quality === "fast" ? "active" : ""} onClick={() => setQuality("fast")}>
+              Fast
+            </button>
+          </div>
+          <button
+            onClick={() => regeneratePlan()}
+            disabled={planLoading}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              border: "none",
+              background: "none",
+              color: "var(--accent)",
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: planLoading ? "default" : "pointer",
+              padding: 0,
+              opacity: planLoading ? 0.6 : 1,
+            }}
+          >
+            {planLoading && <span className="spinner" />}
+            {planLoading ? "Planning…" : "↻ Regenerate"}
+          </button>
+        </div>
+      )}
       {planError && (tab === "today" || tab === "week") && (
         <p style={{ margin: 0, padding: "0 16px 10px", fontSize: 11.5, color: "var(--warm)" }}>
           Couldn't generate plan: {planError}

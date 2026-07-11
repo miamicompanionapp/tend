@@ -91,6 +91,43 @@ body {
   display: flex;
 }
 
+.quality-toggle {
+  display: flex;
+  gap: 3px;
+  background: var(--surface-2);
+  border-radius: 100px;
+  padding: 2px;
+}
+.quality-toggle button {
+  border: none;
+  background: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 100px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.quality-toggle button.active {
+  background: var(--accent);
+  color: #f6f4ee;
+}
+
+.spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .tab-bar {
   display: flex;
   border-top: 1px solid var(--line);

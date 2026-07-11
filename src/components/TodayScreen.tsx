@@ -10,9 +10,14 @@ export function TodayScreen({ events, loading }: { events: CalendarEvent[]; load
 
   if (!hasEvents) {
     return (
-      <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", marginTop: 60 }}>
-        {loading ? "Planning your day…" : "Nothing planned for today yet. Add a goal to get started."}
-      </p>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginTop: 60 }}>
+        {loading && <span className="spinner" style={{ width: 18, height: 18, borderWidth: 3 }} />}
+        <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", margin: 0, maxWidth: "26ch" }}>
+          {loading
+            ? "Planning your day… this can take up to 30 seconds, especially on Careful mode."
+            : "Nothing planned for today yet. Add a goal to get started."}
+        </p>
+      </div>
     );
   }
 

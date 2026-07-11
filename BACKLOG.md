@@ -124,6 +124,26 @@ data. Phases below are ranked; work top to bottom.
 
 **Phase 3 complete.**
 
+13. [x] Generate-plan latency fix — DONE 2026-07-11. Live testing found
+        `/api/generate-plan` legitimately takes 24-29s on `claude-opus-4-8`
+        for a full week (confirmed via direct curl + Playwright against
+        prod, not a client bug — the request does complete, it's just
+        slow with no feedback). Fixed two ways:
+        - **Loading UX**: `TodayScreen`'s empty-loading state now shows a
+          spinner + honest copy ("this can take up to 30 seconds") instead
+          of static unchanging text that reads as frozen. Added a `.spinner`
+          CSS class (reused on the app-bar Regenerate button too).
+        - **Quality toggle**: new `PlanQuality` ("careful" | "fast") on
+          `GeneratePlanRequest`, persisted in `usePlanner` (localStorage
+          `tend.planQuality`), sent with every generate-plan call.
+          `functions/api/generate-plan.ts` maps careful→`claude-opus-4-8`,
+          fast→`claude-sonnet-5`. New `.quality-toggle` segmented control
+          in the app bar (Today/Week tabs only), changing it re-triggers
+          generation like a goal change does. Measured in testing:
+          careful ~24.3s, fast ~18.6s — a real but modest gain, not
+          dramatic; some of the latency floor is inherent to generating
+          ~40-60 structured events regardless of model.
+
 ### Phase 4 — Ship & validate
 11. [ ] Confirm the Cloudflare Pages "Connect to Git" step was completed
         (GitHub App access was granted 2026-07-10) so pushes actually

@@ -69,12 +69,16 @@ export interface ReplanResponse {
   diff: PlanDiffEntry[];
 }
 
+/** "careful" = more consistent, slower (claude-opus-4-8); "fast" = quicker, less nuanced (claude-sonnet-5). */
+export type PlanQuality = "careful" | "fast";
+
 export interface GeneratePlanRequest {
   goals: Goal[];
   /** ISO date for the first day of the range, e.g. 2026-07-13 */
   startDate: string;
   /** Number of days to generate, default 7 */
   days?: number;
+  quality?: PlanQuality;
 }
 
 export interface GeneratePlanResponse {

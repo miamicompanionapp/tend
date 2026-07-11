@@ -29,6 +29,11 @@ const EVENT_SCHEMA: Anthropic.Tool.InputSchema = {
   additionalProperties: false,
 };
 
+const MODEL_BY_QUALITY: Record<string, string> = {
+  careful: "claude-opus-4-8",
+  fast: "claude-sonnet-5",
+};
+
 function dateRange(startDate: string, days: number): string[] {
   const [y, m, d] = startDate.split("-").map(Number);
   const start = new Date(Date.UTC(y, m - 1, d));
@@ -75,6 +80,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   const days = body.days && body.days > 0 ? body.days : 7;
   const dates = dateRange(body.startDate, days);
+  const model = (body.quality && MODEL_BY_QUALITY[body.quality]) || MODEL_BY_QUALITY.careful;
 
   let client;
   try {
@@ -85,7 +91,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   try {
     const response = await client.messages.create({
-      model: "claude-opus-4-8",
+      model,
       max_tokens: 8192,
       system: buildSystemPrompt(dates),
       messages: [
