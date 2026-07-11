@@ -1,5 +1,6 @@
 import type { ReplanRequest, ReplanResponse } from "../types";
 import { addDays } from "./date";
+import { translations } from "../i18n/translations";
 
 /**
  * Sends the current goals + events plus a free-text disruption to the planning
@@ -29,17 +30,18 @@ export async function requestReplan(req: ReplanRequest): Promise<ReplanResponse>
  * Delete once /api/replan is live.
  */
 function mockReplan(req: ReplanRequest): ReplanResponse {
-  const urgent = /vet|emergency|urgent/i.test(req.message);
+  const t = translations[req.language ?? "en"];
+  const urgent = /vet|emergency|urgent|acil|veteriner/i.test(req.message);
   if (!urgent) {
     return {
-      summary: "Noted — I didn't find anything on today's plan that conflicts with that.",
+      summary: t.replanMock.nothingConflicts,
       diff: [],
     };
   }
   const run = req.events.find((e) => e.title.toLowerCase().includes("run"));
   const dinner = req.events.find((e) => e.title.toLowerCase().includes("dinner") && !e.autoAdded);
   return {
-    summary: "Got it — that's more urgent than everything else this afternoon. Here's what I'd change:",
+    summary: t.replanMock.urgentSummary,
     diff: [
       ...(run
         ? [
@@ -48,8 +50,8 @@ function mockReplan(req: ReplanRequest): ReplanResponse {
               eventId: run.id,
               title: run.title,
               before: `today ${run.startTime}`,
-              after: "tomorrow, same time",
-              reason: "Lower priority than an urgent vet visit",
+              after: t.replanMock.runMovedAfter,
+              reason: t.replanMock.runMovedReason,
               event: { ...run, date: addDays(run.date, 1) },
             },
           ]
@@ -57,9 +59,9 @@ function mockReplan(req: ReplanRequest): ReplanResponse {
       {
         action: "cancelled" as const,
         eventId: "goal-groceries",
-        title: "Grocery shopping",
-        before: "later this week",
-        reason: "Vet visit takes priority",
+        title: t.replanMock.groceriesTitle,
+        before: t.replanMock.groceriesBefore,
+        reason: t.replanMock.groceriesCancelledReason,
       },
       ...(dinner
         ? [
@@ -67,8 +69,8 @@ function mockReplan(req: ReplanRequest): ReplanResponse {
               action: "kept" as const,
               eventId: dinner.id,
               title: dinner.title,
-              after: "pushed 30 min later",
-              reason: "High priority — shifted instead of dropped",
+              after: t.replanMock.dinnerKeptAfter,
+              reason: t.replanMock.dinnerKeptReason,
             },
           ]
         : []),

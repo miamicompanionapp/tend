@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import type { CalendarEvent, Goal, PlanQuality } from "../types";
-import { seedGoals } from "../data/seed";
+import { getSeedGoals } from "../data/seed";
 import { getMonday, toISODate } from "../lib/date";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const GOALS_KEY = "tend.goals";
 const EVENTS_KEY = "tend.events";
@@ -24,7 +25,10 @@ function loadQuality(): PlanQuality {
 }
 
 export function usePlanner() {
-  const [goals, setGoals] = useState<Goal[]>(() => loadOrSeed(GOALS_KEY, seedGoals));
+  const { lang } = useLanguage();
+  const langRef = useRef(lang);
+  langRef.current = lang;
+  const [goals, setGoals] = useState<Goal[]>(() => loadOrSeed(GOALS_KEY, getSeedGoals(lang)));
   const [events, setEvents] = useState<CalendarEvent[]>(() => loadOrSeed<CalendarEvent[]>(EVENTS_KEY, []));
   const [quality, setQualityState] = useState<PlanQuality>(loadQuality);
   const [notes, setNotesState] = useState<string>(() => localStorage.getItem(NOTES_KEY) ?? "");
@@ -64,6 +68,7 @@ export function usePlanner() {
           days: 7,
           quality: qualityRef.current,
           notes: notesRef.current || undefined,
+          language: langRef.current,
         }),
       });
       if (!res.ok) {

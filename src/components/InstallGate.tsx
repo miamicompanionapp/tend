@@ -7,34 +7,10 @@ import {
   type AndroidBrowser,
   type InstallPlatform,
 } from "../lib/pwa";
-
-const IOS_STEPS = [
-  "Tap the Share icon (square with an arrow) in Safari's toolbar.",
-  'Scroll down and tap "Add to Home Screen".',
-  'Tap "Add" in the top right.',
-];
-
-const DESKTOP_STEPS = [
-  "Click the install icon (⊕) in the address bar, or open the browser menu.",
-  'Click "Install Tend".',
-  "Tend opens in its own window, just like a native app.",
-];
-
-const ANDROID_STEPS: Record<AndroidBrowser, string[]> = {
-  chrome: ["Tap the ⋮ menu in the top right.", 'Tap "Add to Home screen" or "Install app".', 'Tap "Install" to confirm.'],
-  samsung: ["Tap the ☰ menu.", 'Tap "Add page to", then "Home screen".', 'Tap "Add".'],
-  firefox: ["Tap the ⋮ menu.", 'Tap "Install".', "Confirm the install."],
-  edge: ["Tap the ⋯ menu.", 'Tap "Add to phone" or "Install app".', 'Confirm "Install".'],
-};
-
-const BROWSER_LABEL: Record<AndroidBrowser, string> = {
-  chrome: "Chrome",
-  samsung: "Samsung Internet",
-  firefox: "Firefox",
-  edge: "Edge",
-};
+import { useLanguage } from "../i18n/LanguageContext";
 
 export function InstallGate({ children }: { children: ReactNode }) {
+  const { t } = useLanguage();
   const [installed, setInstalled] = useState(() => isRunningAsPwa());
   const [platform, setPlatform] = useState<InstallPlatform>(() => detectPlatform());
   const [browser, setBrowser] = useState<AndroidBrowser>(() => detectAndroidBrowser());
@@ -53,7 +29,8 @@ export function InstallGate({ children }: { children: ReactNode }) {
 
   if (installed) return <>{children}</>;
 
-  const steps = platform === "ios" ? IOS_STEPS : platform === "desktop" ? DESKTOP_STEPS : ANDROID_STEPS[browser];
+  const steps =
+    platform === "ios" ? t.installGate.iosSteps : platform === "desktop" ? t.installGate.desktopSteps : t.installGate.androidSteps[browser];
 
   function continueInBrowser() {
     localStorage.setItem(INSTALL_BYPASS_KEY, "1");
@@ -66,31 +43,29 @@ export function InstallGate({ children }: { children: ReactNode }) {
         <div className="onboarding-content">
           <p className="install-gate-icon">📅</p>
           <p className="app-name" style={{ fontSize: 26, margin: "0 0 4px" }}>
-            Add Tend to your home screen
+            {t.installGate.title}
           </p>
-          <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "0 0 20px" }}>
-            Tend works best installed like a real app — no browser bar, full screen, one tap to open.
-          </p>
+          <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "0 0 20px" }}>{t.installGate.subtitle}</p>
 
           <div className="install-gate-tabs">
             <button className={platform === "ios" ? "active" : ""} onClick={() => setPlatform("ios")}>
-              🍏 iPhone / iPad
+              {t.installGate.iosTab}
             </button>
             <button className={platform === "android" ? "active" : ""} onClick={() => setPlatform("android")}>
-              🤖 Android
+              {t.installGate.androidTab}
             </button>
             <button className={platform === "desktop" ? "active" : ""} onClick={() => setPlatform("desktop")}>
-              💻 Desktop
+              {t.installGate.desktopTab}
             </button>
           </div>
 
           {platform === "android" && (
             <div className="install-gate-browser-pick">
-              <label htmlFor="install-gate-browser">Which browser are you using?</label>
+              <label htmlFor="install-gate-browser">{t.installGate.browserQuestion}</label>
               <select id="install-gate-browser" value={browser} onChange={(e) => setBrowser(e.target.value as AndroidBrowser)}>
-                {(Object.keys(BROWSER_LABEL) as AndroidBrowser[]).map((b) => (
+                {(Object.keys(t.installGate.browsers) as AndroidBrowser[]).map((b) => (
                   <option key={b} value={b}>
-                    {BROWSER_LABEL[b]}
+                    {t.installGate.browsers[b]}
                   </option>
                 ))}
               </select>
@@ -105,7 +80,7 @@ export function InstallGate({ children }: { children: ReactNode }) {
         </div>
 
         <button className="install-gate-continue" onClick={continueInBrowser}>
-          Continue in browser instead
+          {t.installGate.continueLink}
         </button>
       </div>
     </div>

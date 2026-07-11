@@ -1,6 +1,7 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { Category, Goal, GoalKind, Priority, RepeatFreq, TimePreference } from "../types";
 import { describeGoalSchedule } from "../lib/schedule";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const DOT_COLOR: Record<Goal["category"], string> = {
   work: "var(--accent)",
@@ -16,49 +17,7 @@ const CHIP_CLASS: Record<GoalKind, string> = {
   flexible: "chip-flexible",
 };
 
-const GROUP_ORDER: { kind: GoalKind; label: string }[] = [
-  { kind: "fixed", label: "Fixed" },
-  { kind: "recurring", label: "Recurring" },
-  { kind: "flexible", label: "Flexible" },
-];
-
-const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
-  { value: "work", label: "Work" },
-  { value: "health", label: "Health" },
-  { value: "home", label: "Home" },
-  { value: "social", label: "Social" },
-];
-
-const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-];
-
-const KIND_OPTIONS: { value: GoalKind; label: string; hint: string }[] = [
-  { value: "fixed", label: "Fixed", hint: "Locked to its time, never moved" },
-  { value: "recurring", label: "Recurring", hint: "Repeats, fit in automatically" },
-  { value: "flexible", label: "Flexible", hint: "Happens when it happens" },
-];
-
-const REPEAT_OPTIONS: { value: RepeatFreq; label: string }[] = [
-  { value: "once", label: "Just once" },
-  { value: "daily", label: "Every day" },
-  { value: "weekdays", label: "Weekdays (Mon–Fri)" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-];
-
-const TIME_PREFERENCE_OPTIONS: { value: TimePreference; label: string }[] = [
-  { value: "morning", label: "Morning" },
-  { value: "afternoon", label: "Afternoon" },
-  { value: "evening", label: "Evening" },
-  { value: "any", label: "Any time" },
-];
-
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
-
-const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
 const inputStyle: CSSProperties = {
   border: "1px solid var(--line)",
@@ -128,13 +87,60 @@ export function GoalsScreen({
   onGeneratePlan: () => void;
   planLoading: boolean;
 }) {
+  const { t, lang } = useLanguage();
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(emptyDraft());
 
-  const grouped = useMemo(
-    () => GROUP_ORDER.map((g) => ({ ...g, goals: goals.filter((goal) => goal.kind === g.kind) })),
-    [goals],
-  );
+  const GROUP_ORDER: { kind: GoalKind; label: string }[] = [
+    { kind: "fixed", label: t.goals.groupFixed },
+    { kind: "recurring", label: t.goals.groupRecurring },
+    { kind: "flexible", label: t.goals.groupFlexible },
+  ];
+
+  const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
+    { value: "work", label: t.goals.categoryWork },
+    { value: "health", label: t.goals.categoryHealth },
+    { value: "home", label: t.goals.categoryHome },
+    { value: "social", label: t.goals.categorySocial },
+  ];
+
+  const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
+    { value: "low", label: t.goals.priorityLow },
+    { value: "medium", label: t.goals.priorityMedium },
+    { value: "high", label: t.goals.priorityHigh },
+  ];
+
+  const KIND_OPTIONS: { value: GoalKind; label: string; hint: string }[] = [
+    { value: "fixed", label: t.goals.typeFixed, hint: t.goals.typeFixedHint },
+    { value: "recurring", label: t.goals.typeRecurring, hint: t.goals.typeRecurringHint },
+    { value: "flexible", label: t.goals.typeFlexible, hint: t.goals.typeFlexibleHint },
+  ];
+
+  const REPEAT_OPTIONS: { value: RepeatFreq; label: string }[] = [
+    { value: "once", label: t.goals.repeatOnce },
+    { value: "daily", label: t.goals.repeatDaily },
+    { value: "weekdays", label: t.goals.repeatWeekdays },
+    { value: "weekly", label: t.goals.repeatWeekly },
+    { value: "monthly", label: t.goals.repeatMonthly },
+  ];
+
+  const TIME_PREFERENCE_OPTIONS: { value: TimePreference; label: string }[] = [
+    { value: "morning", label: t.timePreference.morning },
+    { value: "afternoon", label: t.timePreference.afternoon },
+    { value: "evening", label: t.timePreference.evening },
+    { value: "any", label: t.timePreference.any },
+  ];
+
+  const chipLabel = (goal: Goal): string =>
+    goal.priority === "high"
+      ? t.goals.chipHighPriority
+      : goal.kind === "fixed"
+        ? t.goals.chipFixed
+        : goal.priority === "low"
+          ? t.goals.chipLowPriority
+          : t.goals.chipFlexible;
+
+  const grouped = GROUP_ORDER.map((g) => ({ ...g, goals: goals.filter((goal) => goal.kind === g.kind) }));
 
   function update<K extends keyof ReturnType<typeof emptyDraft>>(key: K, value: ReturnType<typeof emptyDraft>[K]) {
     setDraft((prev) => ({ ...prev, [key]: value }));
@@ -182,12 +188,10 @@ export function GoalsScreen({
                 <span className="goal-dot" style={{ background: DOT_COLOR[goal.category] }} />
                 <div className="goal-body">
                   <p className="goal-title">{goal.title}</p>
-                  <p className="goal-meta">{describeGoalSchedule(goal)}</p>
+                  <p className="goal-meta">{describeGoalSchedule(goal, lang)}</p>
                 </div>
-                <span className={`goal-chip ${CHIP_CLASS[goal.kind]}`}>
-                  {goal.priority === "high" ? "High priority" : goal.kind === "fixed" ? "Fixed" : goal.priority === "low" ? "Low priority" : "Flexible"}
-                </span>
-                <button className="goal-remove" onClick={() => onRemove(goal.id)} aria-label={`Remove ${goal.title}`}>
+                <span className={`goal-chip ${CHIP_CLASS[goal.kind]}`}>{chipLabel(goal)}</span>
+                <button className="goal-remove" onClick={() => onRemove(goal.id)} aria-label={t.goals.removeAria(goal.title)}>
                   ×
                 </button>
               </div>
@@ -203,15 +207,15 @@ export function GoalsScreen({
         disabled={planLoading}
       >
         {planLoading && <span className="spinner" style={{ borderColor: "rgba(246,244,238,0.35)", borderTopColor: "#f6f4ee" }} />}
-        {planLoading ? "Generating your week…" : "Generate plan"}
+        {planLoading ? t.goals.generating : t.goals.generatePlan}
       </button>
 
       {adding ? (
         <div className="goal-card goal-form" style={{ flexDirection: "column", alignItems: "stretch", gap: 14 }}>
           <div>
-            <p className="field-label">What is it?</p>
+            <p className="field-label">{t.goals.formTitleLabel}</p>
             <input
-              placeholder="e.g. Piano practice"
+              placeholder={t.goals.formTitlePlaceholder}
               value={draft.title}
               onChange={(e) => update("title", e.target.value)}
               style={inputStyle}
@@ -220,23 +224,23 @@ export function GoalsScreen({
           </div>
 
           <div>
-            <p className="field-label">Category</p>
+            <p className="field-label">{t.goals.categoryLabel}</p>
             <Segmented options={CATEGORY_OPTIONS} value={draft.category} onChange={(v) => update("category", v)} />
           </div>
 
           <div>
-            <p className="field-label">Priority</p>
+            <p className="field-label">{t.goals.priorityLabel}</p>
             <Segmented options={PRIORITY_OPTIONS} value={draft.priority} onChange={(v) => update("priority", v)} />
           </div>
 
           <div>
-            <p className="field-label">Type</p>
+            <p className="field-label">{t.goals.typeLabel}</p>
             <Segmented options={KIND_OPTIONS} value={draft.kind} onChange={(v) => update("kind", v)} />
             <p className="field-hint">{KIND_OPTIONS.find((k) => k.value === draft.kind)?.hint}</p>
           </div>
 
           <div>
-            <p className="field-label">Repeats</p>
+            <p className="field-label">{t.goals.repeatsLabel}</p>
             <select value={draft.freq} onChange={(e) => update("freq", e.target.value as RepeatFreq)} style={inputStyle}>
               {REPEAT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -248,9 +252,9 @@ export function GoalsScreen({
 
           {draft.freq === "weekly" && (
             <div>
-              <p className="field-label">On which days?</p>
+              <p className="field-label">{t.goals.daysLabel}</p>
               <div className="day-picker">
-                {DAY_LABELS.map((label, i) => (
+                {t.weekday.narrow.map((label, i) => (
                   <button
                     type="button"
                     key={i}
@@ -264,7 +268,7 @@ export function GoalsScreen({
               {draft.daysOfWeek.length === 0 && (
                 <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
                   <span className="field-hint" style={{ margin: 0 }}>
-                    or, times per week:
+                    {t.goals.timesPerWeekPrefix}
                   </span>
                   <select
                     value={draft.timesPerWeek}
@@ -283,11 +287,11 @@ export function GoalsScreen({
           )}
 
           <div>
-            <p className="field-label">When</p>
+            <p className="field-label">{t.goals.whenLabel}</p>
             <Segmented
               options={[
-                { value: "flexible", label: "Time of day" },
-                { value: "specific", label: "Specific time" },
+                { value: "flexible", label: t.goals.timeOfDay },
+                { value: "specific", label: t.goals.specificTime },
               ]}
               value={draft.timeMode}
               onChange={(v) => update("timeMode", v)}
@@ -307,7 +311,7 @@ export function GoalsScreen({
           </div>
 
           <div>
-            <p className="field-label">Duration</p>
+            <p className="field-label">{t.goals.durationLabel}</p>
             <select
               value={draft.durationMinutes}
               onChange={(e) => update("durationMinutes", Number(e.target.value))}
@@ -315,7 +319,7 @@ export function GoalsScreen({
             >
               {DURATION_OPTIONS.map((min) => (
                 <option key={min} value={min}>
-                  {min < 60 ? `${min} min` : `${min / 60} hr${min > 60 ? "s" : ""}`}
+                  {min < 60 ? t.goals.durationMin(min) : t.goals.durationHr(min / 60)}
                 </option>
               ))}
             </select>
@@ -329,10 +333,10 @@ export function GoalsScreen({
                 setAdding(false);
               }}
             >
-              Cancel
+              {t.goals.cancel}
             </button>
             <button className="btn primary" onClick={submitNewGoal}>
-              Add goal
+              {t.goals.addGoal}
             </button>
           </div>
         </div>
@@ -354,20 +358,20 @@ export function GoalsScreen({
             cursor: "pointer",
           }}
         >
-          + Add a goal or commitment
+          {t.goals.addGoalCta}
         </button>
       )}
 
       <div style={{ marginTop: 20 }}>
-        <p className="field-label">Anything Tend should know?</p>
+        <p className="field-label">{t.goals.notesLabel}</p>
         <textarea
-          placeholder="e.g. I have two kids, keep mornings flexible. No exercise before 6am."
+          placeholder={t.goals.notesPlaceholder}
           value={notes}
           onChange={(e) => onNotesChange(e.target.value)}
           rows={3}
           style={{ ...inputStyle, resize: "vertical" }}
         />
-        <p className="field-hint">Shared with the planner every time you tap "Generate plan".</p>
+        <p className="field-hint">{t.goals.notesHint}</p>
       </div>
     </div>
   );

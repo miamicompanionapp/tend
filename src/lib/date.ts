@@ -1,3 +1,6 @@
+import type { Lang } from "../types";
+import { translations } from "../i18n/translations";
+
 /** Local (not UTC) ISO date, e.g. "2026-07-13". */
 export function toISODate(d: Date): string {
   const y = d.getFullYear();
@@ -26,9 +29,17 @@ export function addDays(dateStr: string, n: number): string {
   return toISODate(date);
 }
 
-const WEEKDAY_LABEL = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-
-export function weekdayLabel(dateStr: string): string {
+function dayOfWeek(dateStr: string): number {
   const [y, m, d] = dateStr.split("-").map(Number);
-  return WEEKDAY_LABEL[new Date(y, m - 1, d).getDay()];
+  return new Date(y, m - 1, d).getDay();
+}
+
+/** 3-letter weekday abbreviation, e.g. "MON" / "PZT". */
+export function weekdayLabel(dateStr: string, lang: Lang): string {
+  return translations[lang].weekday.short[dayOfWeek(dateStr)];
+}
+
+/** 2-letter weekday abbreviation for compact UI (day-strip), e.g. "Mo" / "Pt". */
+export function weekdayNarrow(dateStr: string, lang: Lang): string {
+  return translations[lang].weekday.narrow[dayOfWeek(dateStr)];
 }

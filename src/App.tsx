@@ -9,8 +9,10 @@ import { usePlanner } from "./state/usePlanner";
 import { addDays, getMonday, todayISODate, toISODate } from "./lib/date";
 import { applyDiff } from "./lib/diff";
 import type { PlanDiffEntry } from "./types";
+import { useLanguage } from "./i18n/LanguageContext";
 
 function App() {
+  const { t, lang } = useLanguage();
   const [tab, setTab] = useState<TabId>("today");
   const {
     goals,
@@ -33,15 +35,16 @@ function App() {
   const today = todayISODate();
   const todayEvents = useMemo(() => events.filter((e) => e.date === today), [events, today]);
 
+  const locale = lang === "tr" ? "tr-TR" : "en-US";
   const subtitle = useMemo(() => {
-    if (tab === "goals") return "Goals";
-    if (tab === "assistant") return "Assistant";
+    if (tab === "goals") return t.tabs.goals;
+    if (tab === "assistant") return t.tabs.assistant;
     const fmtDay = (iso: string) =>
-      new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      new Date(`${iso}T00:00:00`).toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" });
     if (tab === "today") return fmtDay(today);
-    const fmt = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const fmt = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString(locale, { month: "short", day: "numeric" });
     return `${fmt(weekStart)} – ${fmt(addDays(weekStart, 6))}`;
-  }, [tab, today, weekStart]);
+  }, [tab, today, weekStart, locale, t]);
 
   const handleApplyDiff = (diff: PlanDiffEntry[]) => applyEvents(applyDiff(events, diff));
 
@@ -84,16 +87,14 @@ function App() {
               }}
             >
               {planLoading && <span className="spinner" />}
-              {planLoading ? "Planning…" : "↻ Regenerate"}
+              {planLoading ? t.app.planning : `↻ ${t.app.regenerate}`}
             </button>
           )}
           <span className="app-subtitle">{subtitle}</span>
         </div>
       </div>
       {planError && (tab === "today" || tab === "week") && (
-        <p style={{ margin: 0, padding: "0 16px 10px", fontSize: 11.5, color: "var(--warm)" }}>
-          Couldn't generate plan: {planError}
-        </p>
+        <p style={{ margin: 0, padding: "0 16px 10px", fontSize: 11.5, color: "var(--warm)" }}>{t.app.generateError(planError)}</p>
       )}
       <div className={`app-content${tab === "assistant" ? " app-content-flush" : ""}`}>
         {tab === "goals" && (

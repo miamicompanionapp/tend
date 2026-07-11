@@ -1,3 +1,5 @@
+export type Lang = "en" | "tr";
+
 export type GoalKind = "fixed" | "recurring" | "flexible";
 
 export type Priority = "high" | "medium" | "low";
@@ -62,6 +64,7 @@ export interface ReplanRequest {
   message: string;
   goals: Goal[];
   events: CalendarEvent[];
+  language?: Lang;
 }
 
 export interface ReplanResponse {
@@ -81,6 +84,7 @@ export interface GeneratePlanRequest {
   quality?: PlanQuality;
   /** Free-text preferences/special instructions from the user, e.g. "I have two kids, keep mornings flexible." */
   notes?: string;
+  language?: Lang;
 }
 
 export interface GeneratePlanResponse {

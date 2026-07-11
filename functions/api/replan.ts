@@ -1,6 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { getClient, jsonResponse, type Env } from "./_lib/claude";
-import type { PlanDiffEntry, ReplanRequest } from "../../src/types";
+import type { Lang, PlanDiffEntry, ReplanRequest } from "../../src/types";
 
 const DIFF_SCHEMA: Anthropic.Tool.InputSchema = {
   type: "object",
@@ -45,7 +45,13 @@ const DIFF_SCHEMA: Anthropic.Tool.InputSchema = {
   additionalProperties: false,
 };
 
-const SYSTEM_PROMPT = `You are Tend's scheduling assistant. The user will describe a disruption to their day (an emergency, a cancellation, running late, etc). You have their goals (with priority and kind) and their current calendar events for today.
+const LANGUAGE_INSTRUCTION: Record<Lang, string> = {
+  en: "Write the summary, every reason, and any event titles you invent in English.",
+  tr: "Write the summary, every reason, and any event titles you invent in Turkish (Türkçe) — natural, fluent Turkish, not machine-translated phrasing.",
+};
+
+function buildSystemPrompt(lang: Lang): string {
+  return `You are Tend's scheduling assistant. The user will describe a disruption to their day (an emergency, a cancellation, running late, etc). You have their goals (with priority and kind) and their current calendar events for today.
 
 Decide the minimal set of changes needed to accommodate the disruption:
 - Prefer moving or shrinking low/medium priority, non-locked events over cancelling high-priority ones.
@@ -54,7 +60,9 @@ Decide the minimal set of changes needed to accommodate the disruption:
 - Each diff entry needs a clear one-sentence reason a person would find satisfying, referencing priority or the disruption itself.
 - eventId must match an id from the provided events list (or the goal id, for a cancelled recurring instance that isn't yet a concrete event).
 - For "moved" entries, include an 'event' object with the full resulting event: same id as eventId, same title/category/durationMinutes unless those genuinely changed, and the new date/startTime. For "added" entries, include an 'event' object with a new unique id. Omit 'event' for "cancelled" and "kept".
+- ${LANGUAGE_INSTRUCTION[lang]} Do not translate the user's own existing event/goal titles — keep those exactly as given.
 - Output only via the tool call — no prose outside it.`;
+}
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   let body: ReplanRequest;
@@ -75,11 +83,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return jsonResponse({ error: (err as Error).message }, 500);
   }
 
+  const language: Lang = body.language === "tr" ? "tr" : "en";
+
   try {
     const response = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 4096,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(language),
       messages: [
         {
           role: "user",

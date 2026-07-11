@@ -3,6 +3,7 @@ import { todayISODate } from "../lib/date";
 import { HOUR_HEIGHT } from "../lib/timeGridLayout";
 import { HourRuler } from "./HourRuler";
 import { DayTrack } from "./DayTrack";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export function TodayScreen({
   events,
@@ -13,6 +14,7 @@ export function TodayScreen({
   loading: boolean;
   onGeneratePlan: () => void;
 }) {
+  const { t } = useLanguage();
   const today = todayISODate();
   const hasEvents = events.some((e) => e.date === today);
 
@@ -21,13 +23,11 @@ export function TodayScreen({
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 60, padding: "0 20px" }}>
         {loading && <span className="spinner" style={{ width: 18, height: 18, borderWidth: 3 }} />}
         <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", margin: 0, maxWidth: "28ch" }}>
-          {loading
-            ? "Planning your day… this can take up to 30 seconds, especially on Careful mode."
-            : "No plan yet. Set up your goals, then generate a plan for the week."}
+          {loading ? t.today.planning : t.today.noPlan}
         </p>
         {!loading && (
           <button className="btn primary" style={{ flex: "none", padding: "10px 20px" }} onClick={onGeneratePlan}>
-            Generate plan
+            {t.today.generatePlan}
           </button>
         )}
       </div>

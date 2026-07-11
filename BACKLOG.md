@@ -230,6 +230,57 @@ data. Phases below are ranked; work top to bottom.
           correctly; "Continue in browser" hides the gate; a mocked
           `display-mode: standalone` media query also hides it without
           touching the bypass flag.
+19. [x] English + Turkish language support — DONE 2026-07-11. Reviewed the
+        whole app for user-facing strings and added a proper i18n layer:
+        - `src/i18n/translations.ts`: a single `en` object covering every
+          static string in the app (tabs, install gate, onboarding, goals
+          form, today/week, assistant, weekday names, mock replan fallback
+          — ~130 keys), plus a `tr` object typed as `typeof en` so
+          TypeScript itself enforces the two languages stay in sync — a
+          missing/extra key in `tr` is a compile error, not a runtime gap.
+        - `src/i18n/LanguageContext.tsx`: React context (`useLanguage()` →
+          `{ lang, setLang, t }`), persisted to localStorage
+          (`tend.language`).
+        - `src/components/LanguagePicker.tsx`: shown before anything else
+          (even the install gate) on first visit — "English" / "Türkçe"
+          buttons in their own language (chicken-and-egg: can't localize
+          the picker asking which language to use). Wired in `main.tsx` as
+          the outermost gate: LanguagePicker → InstallGate → Onboarding →
+          App.
+        - Every component swept to replace hardcoded strings with `t.*`
+          calls: `TabBar`, `InstallGate`, `OnboardingScreen`, `GoalsScreen`
+          (biggest one — all form labels/options moved from module-level
+          consts to per-render arrays built from `t`), `TodayScreen`,
+          `WeekScreen`, `AssistantScreen`, `HourRuler`. `lib/schedule.ts`
+          and `lib/date.ts` now take a `lang` param (weekday names, time
+          format — Turkish uses 24-hour "14:30", English keeps "2:30pm").
+        - Seed goals (`data/seed.ts`) are now `getSeedGoals(lang)` with a
+          Turkish variant, not just the UI chrome — caught in testing when
+          "Biking"/"Tidy up" showed up untranslated in an otherwise-Turkish
+          plan (correct behavior given the AI is told not to translate
+          user-authored goal titles, but wrong since seed goals should
+          count as app content, not user content).
+        - **Backend also honors language**, not just static UI: `Lang`
+          added to `GeneratePlanRequest`/`ReplanRequest`, threaded through
+          `usePlanner`/`AssistantScreen`. `functions/api/generate-plan.ts`
+          and `functions/api/replan.ts` both add a language instruction to
+          their system prompts (explicitly: translate generated text, but
+          never the user's own goal/event titles) and generate-plan uses
+          localized meal names (Kahvaltı/Öğle Yemeği/Akşam Yemeği) instead
+          of relying on the free-form instruction alone for those three
+          fixed labels.
+        - Verified end-to-end via Playwright in Turkish: language picker →
+          install gate → onboarding → goals form → generate plan → Today
+          grid (24-hour times, Turkish meal names, Turkish seeded goal
+          titles) → Assistant disruption message in Turkish → fluent
+          Turkish AI response and diff card. English flow re-verified for
+          regression after the refactor.
+        - Known minor rough edge: Claude's dynamically-generated text
+          (Assistant reasons, invented event titles) occasionally mixes in
+          an English word or mangles a Turkish diacritic (e.g. "İş" → "Is"
+          in one run) — inherent LLM variance, not a bug in the string
+          dictionary; worth a follow-up prompt tune if it shows up often
+          in real use, not blocking for pre-beta.
 
 ### Not in MVP scope (parked)
 - [ ] Decide whether localStorage-only persistence (`usePlanner.ts`) is

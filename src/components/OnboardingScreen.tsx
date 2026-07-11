@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { PlanQuality } from "../types";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export function OnboardingScreen({
   quality,
@@ -14,6 +15,7 @@ export function OnboardingScreen({
   onNotesChange: (n: string) => void;
   onComplete: () => void;
 }) {
+  const { t } = useLanguage();
   const [localNotes, setLocalNotes] = useState(notes);
 
   function finish() {
@@ -26,57 +28,50 @@ export function OnboardingScreen({
       <div className="onboarding">
         <div className="onboarding-content">
           <p className="app-name" style={{ fontSize: 26, margin: "0 0 4px" }}>
-            Welcome to Tend
+            {t.onboarding.title}
           </p>
-          <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "0 0 24px" }}>
-            A calendar that plans itself around your life — and re-plans when life doesn't cooperate.
-          </p>
+          <p style={{ fontSize: 13, color: "var(--ink-soft)", margin: "0 0 24px" }}>{t.onboarding.subtitle}</p>
 
           <div className="onboarding-step">
             <span className="onboarding-step-num">1</span>
             <div>
-              <p className="onboarding-step-title">Set your goals</p>
-              <p className="onboarding-step-body">
-                Work, exercise, family time — anything you want to make room for, on whatever schedule fits.
-              </p>
+              <p className="onboarding-step-title">{t.onboarding.step1Title}</p>
+              <p className="onboarding-step-body">{t.onboarding.step1Body}</p>
             </div>
           </div>
           <div className="onboarding-step">
             <span className="onboarding-step-num">2</span>
             <div>
-              <p className="onboarding-step-title">Tap "Generate plan"</p>
-              <p className="onboarding-step-body">Tend turns your goals into a real week — fitting everything in, nothing overlapping.</p>
+              <p className="onboarding-step-title">{t.onboarding.step2Title}</p>
+              <p className="onboarding-step-body">{t.onboarding.step2Body}</p>
             </div>
           </div>
           <div className="onboarding-step">
             <span className="onboarding-step-num">3</span>
             <div>
-              <p className="onboarding-step-title">Tell the Assistant when life happens</p>
-              <p className="onboarding-step-body">Running late? Something came up? Say so, and Tend re-plans your day around it.</p>
+              <p className="onboarding-step-title">{t.onboarding.step3Title}</p>
+              <p className="onboarding-step-body">{t.onboarding.step3Body}</p>
             </div>
           </div>
 
           <p className="field-label" style={{ marginTop: 24 }}>
-            Plan quality
+            {t.onboarding.qualityLabel}
           </p>
           <div className="quality-toggle" style={{ width: "fit-content" }}>
             <button className={quality === "careful" ? "active" : ""} onClick={() => onQualityChange("careful")}>
-              Careful
+              {t.quality.careful}
             </button>
             <button className={quality === "fast" ? "active" : ""} onClick={() => onQualityChange("fast")}>
-              Fast
+              {t.quality.fast}
             </button>
           </div>
-          <p className="field-hint">
-            Careful is more consistent but slower (~25s). Fast is quicker but less careful about overlaps and
-            preferences. You can change this anytime from the Assistant tab.
-          </p>
+          <p className="field-hint">{t.onboarding.qualityHint}</p>
 
           <p className="field-label" style={{ marginTop: 20 }}>
-            Anything Tend should know?
+            {t.onboarding.notesLabel}
           </p>
           <textarea
-            placeholder="e.g. I have two kids, keep mornings flexible. No exercise before 6am."
+            placeholder={t.onboarding.notesPlaceholder}
             value={localNotes}
             onChange={(e) => setLocalNotes(e.target.value)}
             rows={3}
@@ -91,11 +86,11 @@ export function OnboardingScreen({
               resize: "vertical",
             }}
           />
-          <p className="field-hint">Optional — shared with the planner every time it builds your week. Edit anytime from Goals.</p>
+          <p className="field-hint">{t.onboarding.notesHint}</p>
         </div>
 
         <button className="btn primary" style={{ margin: 16 }} onClick={finish}>
-          Let's set up your goals
+          {t.onboarding.continueButton}
         </button>
       </div>
     </div>

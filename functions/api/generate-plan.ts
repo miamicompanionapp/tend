@@ -1,6 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { getClient, jsonResponse, type Env } from "./_lib/claude";
-import type { CalendarEvent, GeneratePlanRequest } from "../../src/types";
+import type { CalendarEvent, GeneratePlanRequest, Lang } from "../../src/types";
 
 const EVENT_SCHEMA: Anthropic.Tool.InputSchema = {
   type: "object",
@@ -34,6 +34,16 @@ const MODEL_BY_QUALITY: Record<string, string> = {
   fast: "claude-sonnet-5",
 };
 
+const MEAL_NAMES: Record<Lang, { breakfast: string; lunch: string; dinner: string }> = {
+  en: { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" },
+  tr: { breakfast: "Kahvaltı", lunch: "Öğle Yemeği", dinner: "Akşam Yemeği" },
+};
+
+const LANGUAGE_INSTRUCTION: Record<Lang, string> = {
+  en: "Write all event titles and any other generated text in English.",
+  tr: "Write all event titles and any other generated text in Turkish (Türkçe) — natural, fluent Turkish, not machine-translated phrasing.",
+};
+
 function dateRange(startDate: string, days: number): string[] {
   const [y, m, d] = startDate.split("-").map(Number);
   const start = new Date(Date.UTC(y, m - 1, d));
@@ -44,13 +54,14 @@ function dateRange(startDate: string, days: number): string[] {
   });
 }
 
-function buildSystemPrompt(dates: string[], notes: string | undefined): string {
+function buildSystemPrompt(dates: string[], notes: string | undefined, lang: Lang): string {
   const dayLines = dates
     .map((date) => {
       const weekday = new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
       return `${date} (${weekday})`;
     })
     .join("\n");
+  const meals = MEAL_NAMES[lang];
 
   return `You are Tend's scheduling assistant. Given a list of goals, generate a concrete calendar of events covering exactly these dates:
 ${dayLines}
@@ -60,9 +71,10 @@ Rules:
 - If a goal has startTime, use it exactly for every occurrence. Otherwise pick a time that fits its timePreference (morning ~7-11, afternoon ~12-17, evening ~17-21, any = your choice) and don't overlap other events that day.
 - Goals with kind "fixed" produce events with locked: true. Other goals produce locked: false or omitted.
 - Set goalId to the originating goal's id on every event produced from a goal.
-- Always add Breakfast (~07:30, 30 min), Lunch (~12:30, 30 min), and Dinner (~19:00, 45 min) each day as separate events with category "human" and autoAdded: true, unless a fixed/locked event already occupies that slot — skip or shift slightly to avoid overlap in that case.
+- Always add ${meals.breakfast} (~07:30, 30 min), ${meals.lunch} (~12:30, 30 min), and ${meals.dinner} (~19:00, 45 min) each day as separate events with category "human" and autoAdded: true, unless a fixed/locked event already occupies that slot — skip or shift slightly to avoid overlap in that case.
 - Never produce two events for the same date whose time ranges overlap.
 - Give every event a unique id, e.g. "ev-<goalId or slug>-<date>".
+- ${LANGUAGE_INSTRUCTION[lang]} Do not translate the user's own goal titles — keep those exactly as given.
 ${notes ? `- The user gave these special instructions/preferences — follow them whenever they don't conflict with a fixed/locked goal: "${notes}"\n` : ""}- Output only via the tool call — no prose.`;
 }
 
@@ -81,6 +93,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const days = body.days && body.days > 0 ? body.days : 7;
   const dates = dateRange(body.startDate, days);
   const model = (body.quality && MODEL_BY_QUALITY[body.quality]) || MODEL_BY_QUALITY.careful;
+  const language: Lang = body.language === "tr" ? "tr" : "en";
 
   let client;
   try {
@@ -93,7 +106,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const response = await client.messages.create({
       model,
       max_tokens: 8192,
-      system: buildSystemPrompt(dates, body.notes),
+      system: buildSystemPrompt(dates, body.notes, language),
       messages: [
         {
           role: "user",
