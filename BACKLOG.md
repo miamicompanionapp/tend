@@ -203,6 +203,33 @@ data. Phases below are ranked; work top to bottom.
         time-grid blocks (especially inset ones) truncate their title —
         users sometimes can't tell what a short bubble actually is without
         this.
+18. [x] PWA install gate — DONE 2026-07-11. Ported the same pattern used in
+        `miami-ride-companion` (a full-screen "add to home screen" page that
+        auto-hides once the app is actually installed), adapted to React:
+        - `src/lib/pwa.ts`: `isRunningAsPwa()` checks
+          `matchMedia('(display-mode: standalone)')`,
+          `navigator.standalone` (iOS Safari's legacy flag), and a
+          `tend.installGateBypass` localStorage flag. Also `detectPlatform()`
+          (ios/android/desktop via UA, incl. iPadOS-in-desktop-mode) and
+          `detectAndroidBrowser()` (chrome/samsung/firefox/edge).
+        - `src/components/InstallGate.tsx`: wraps `<App />` in `main.tsx`,
+          so it gates everything (including onboarding) until installed.
+          Shows platform tabs (+ a browser `<select>` on Android) with
+          tailored numbered install steps, auto-detected but user-
+          overridable — same UX shape as the miami-companion gate.
+        - **Deviation from miami-companion on purpose**: that app has no
+          visible skip (only a hidden 5-tap-icon secret + a `pwa-bypass`
+          key nothing ever sets). Tend adds a plain, always-visible
+          "Continue in browser instead" link that sets the bypass flag —
+          reasonable for pre-beta testers who may be on desktop/testing
+          contexts where installing isn't practical. Flag this to Abdullah;
+          revert to a hard block (matching miami-companion exactly) if
+          that's not wanted.
+        - Verified via Playwright: Android UA → Chrome steps shown by
+          default, switching to iOS/Desktop tabs swaps instructions
+          correctly; "Continue in browser" hides the gate; a mocked
+          `display-mode: standalone` media query also hides it without
+          touching the bypass flag.
 
 ### Not in MVP scope (parked)
 - [ ] Decide whether localStorage-only persistence (`usePlanner.ts`) is

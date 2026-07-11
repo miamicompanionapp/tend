@@ -109,6 +109,92 @@ body {
   line-height: 1.4;
 }
 
+/* install gate */
+.install-gate-icon {
+  font-size: 40px;
+  margin: 0 0 6px;
+}
+.install-gate-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 18px;
+  flex-wrap: wrap;
+}
+.install-gate-tabs button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 100px;
+  cursor: pointer;
+}
+.install-gate-tabs button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #f6f4ee;
+}
+.install-gate-browser-pick {
+  margin-bottom: 18px;
+}
+.install-gate-browser-pick label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+.install-gate-browser-pick select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  font: inherit;
+  background: var(--surface);
+  color: inherit;
+}
+.install-gate-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: install-step;
+}
+.install-gate-steps li {
+  counter-increment: install-step;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+.install-gate-steps li::before {
+  content: counter(install-step);
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.install-gate-continue {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-decoration: underline;
+  cursor: pointer;
+  margin: 0 auto 16px;
+  padding: 4px;
+}
+
 .app-name {
   font-family: ui-serif, Georgia, serif;
   font-weight: 600;
