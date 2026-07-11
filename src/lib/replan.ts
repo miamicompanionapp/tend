@@ -54,10 +54,10 @@ function mockReplan(req: ReplanRequest): ReplanResponse {
         : []),
       {
         action: "cancelled" as const,
-        eventId: "goal-dog-nails",
-        title: "Trim dog's nails",
+        eventId: "goal-groceries",
+        title: "Grocery shopping",
         before: "later this week",
-        reason: "Vet visit covers this",
+        reason: "Vet visit takes priority",
       },
       ...(dinner
         ? [

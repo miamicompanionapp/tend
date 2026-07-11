@@ -182,6 +182,65 @@ body {
   padding: 4px;
 }
 
+/* goal form */
+.goal-form {
+  box-shadow: none;
+}
+.field-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+}
+.field-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 6px 2px 0;
+}
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.segmented-btn {
+  flex: 1;
+  min-width: fit-content;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.segmented-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #f6f4ee;
+}
+.day-picker {
+  display: flex;
+  gap: 6px;
+}
+.day-chip {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.day-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #f6f4ee;
+}
+
 /* today */
 .agenda-row {
   display: flex;

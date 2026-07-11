@@ -4,9 +4,9 @@ const WEEK = [
   { label: "MON", chips: [{ t: "Work", c: "" }, { t: "Run", c: "health" }, { t: "Tidy", c: "home" }] },
   { label: "TUE", chips: [{ t: "Work", c: "" }, { t: "Tidy", c: "home" }] },
   { label: "WED", today: true, chips: [{ t: "Work", c: "" }, { t: "Run", c: "health" }, { t: "Tidy", c: "home" }] },
-  { label: "THU", chips: [{ t: "Work", c: "" }, { t: "Nails", c: "home" }, { t: "Tidy", c: "home" }] },
+  { label: "THU", chips: [{ t: "Work", c: "" }, { t: "Groceries", c: "home" }, { t: "Tidy", c: "home" }] },
   { label: "FRI", chips: [{ t: "Work", c: "" }, { t: "Run", c: "health" }, { t: "Tidy", c: "home" }] },
-  { label: "SAT", chips: [{ t: "Biking", c: "health" }, { t: "Dinner — wife", c: "social" }] },
+  { label: "SAT", chips: [{ t: "Biking", c: "health" }, { t: "Family dinner", c: "social" }] },
   { label: "SUN", chips: [{ t: "Tidy", c: "home" }] },
 ];
 
