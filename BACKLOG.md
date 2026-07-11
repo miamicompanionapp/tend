@@ -78,13 +78,31 @@ data. Phases below are ranked; work top to bottom.
        via Playwright against `wrangler pages dev`: real dates render,
        today's column highlights in the Week grid, adding a goal
        re-triggers generation.
-7. [ ] Port the time-grid Week view mock into `WeekScreen.tsx` — hourly grid,
-       day-strip on phone / 7-column on landscape, positioned by `startTime` +
-       `durationMinutes` instead of the static chip-stack.
-8. [ ] Live current-time indicator line on Week/Today (mock used a fixed demo
-       time; real version needs it to update, e.g. via `setInterval`).
+7. [x] Port the time-grid Week view mock into `WeekScreen.tsx` — DONE
+       2026-07-10. Built a shared time-grid: `src/lib/timeGridLayout.ts`
+       (pixel positioning by `startTime`/`durationMinutes`, greedy
+       overlap-column assignment), `HourRuler.tsx` (hour labels) and
+       `DayTrack.tsx` (one day's events, absolutely positioned) used by
+       both `TodayScreen.tsx` (single day) and `WeekScreen.tsx`. Resolved
+       the open design question below: phone/portrait `WeekScreen` now
+       shows a day-strip (tap any day, defaults to today) + that day's
+       time-grid, replacing the old "rotate your phone" hint; landscape /
+       ≥768px still shows the full 7-column grid. `TodayScreen`'s old flat
+       agenda-row list is gone — it's a single-day time-grid now too.
+8. [x] Live current-time indicator line on Week/Today — DONE 2026-07-10.
+       `src/lib/useNow.ts` re-renders every 60s; `DayTrack` draws a red
+       line (`--now-line` CSS var, themed for dark mode) at the correct
+       pixel offset whenever the displayed day is today. This is the
+       actual code — previously this only existed in a one-off design
+       artifact and was never in `WeekScreen.tsx`, which is why it never
+       showed up after deploying. Verified via Playwright at 9:30pm local:
+       line renders exactly between the 9pm and 10pm gridlines.
 9. [ ] Overlap layout: short events (e.g. Lunch) inset over longer ones (e.g.
-       Work) instead of stacking flush — port the rank/inset logic from the mock.
+       Work) instead of stacking flush. Current `layoutDay()` in
+       `timeGridLayout.ts` does side-by-side column splitting (a real
+       improvement over the old static chip-stack, and correct for
+       genuinely concurrent events) but not the "small event insets into
+       big event" treatment the mock had — still open.
 10. [ ] Wire the Assistant screen's diff-approval flow to actually call
         `applyEvents()` (already exists in `usePlanner.ts`, just unused) —
         see the TODO in `src/components/AssistantScreen.tsx`.
@@ -113,7 +131,7 @@ data. Phases below are ranked; work top to bottom.
       scoped to `miami-ride-companion` only) — DONE 2026-07-10
 - [x] Design mock: Week screen as hourly time-grid with current-time line,
       compact short-event labels, and overlap inset handling — DONE 2026-07-10
-      (artifact only, not yet ported to `WeekScreen.tsx` — see Next Up #1-3)
+      (artifact only; ported to real code as Phase 3 #7-8, see above)
 - [x] Seed goals cleaned up — dropped "Trim dog's nails" (too specific to be
       a relatable default) in favor of generic mundane-life examples: Work,
       Exercise, Biking, Grocery shopping, Tidy up, Family dinner — DONE
@@ -125,9 +143,12 @@ data. Phases below are ranked; work top to bottom.
 
 ## DESIGN DECISIONS STILL OPEN
 
-- [ ] Should the phone Week view default to "today" single-day time-grid, or
-      keep the portrait rotate-hint and only show the grid in landscape?
-- [ ] Inset amount / shadow strength for overlapping events — tune once it's
-      real code and testable on a phone, not just the static mock.
-- [ ] How much of the mock's compact/inset logic belongs in a shared layout
-      util (usable by both Today and Week) vs. duplicated per screen?
+- [x] Phone Week view: resolved 2026-07-10 — defaults to a day-strip +
+      single-day time-grid (tap any day, defaults to today), not the old
+      rotate-hint. See Phase 3 #7.
+- [x] Shared layout util: resolved 2026-07-10 — `timeGridLayout.ts` +
+      `HourRuler`/`DayTrack` are shared by both `TodayScreen` and
+      `WeekScreen`. See Phase 3 #7.
+- [ ] Inset amount / shadow strength for overlapping events — tune once the
+      "small event insets into big event" treatment (Phase 3 #9) is built;
+      current side-by-side column split works but wasn't tuned for that case.

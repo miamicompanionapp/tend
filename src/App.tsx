@@ -58,7 +58,7 @@ function App() {
       )}
       <div className={`app-content${tab === "assistant" ? " app-content-flush" : ""}`}>
         {tab === "goals" && <GoalsScreen goals={goals} onAdd={addGoal} onRemove={removeGoal} />}
-        {tab === "today" && <TodayScreen events={todayEvents} loading={planLoading} />}
+        {tab === "today" && <TodayScreen events={events} loading={planLoading} />}
         {tab === "week" && <WeekScreen events={events} weekStart={weekStart} />}
         {tab === "assistant" && <AssistantScreen goals={goals} events={todayEvents} />}
       </div>
