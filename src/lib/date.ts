@@ -13,6 +13,14 @@ export function todayISODate(): string {
   return toISODate(new Date());
 }
 
+/** Local (not UTC) "YYYY-MM-DDTHH:mm" for the current moment — ground truth for "now" in AI prompts. */
+export function nowLocalISO(): string {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${toISODate(d)}T${hh}:${mm}`;
+}
+
 /** Monday-based start of the week containing `d`. */
 export function getMonday(d: Date): Date {
   const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());

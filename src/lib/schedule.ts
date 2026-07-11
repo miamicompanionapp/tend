@@ -1,5 +1,6 @@
-import type { Goal, Lang, Repeat } from "../types";
+import type { CalendarEvent, Goal, Lang, Repeat } from "../types";
 import { translations } from "../i18n/translations";
+import { todayISODate } from "./date";
 
 export function describeRepeat(repeat: Repeat, lang: Lang): string {
   const t = translations[lang];
@@ -33,6 +34,26 @@ export function formatTime(time: string, lang: Lang): string {
   const period = h >= 12 ? "pm" : "am";
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return m === 0 ? `${hour12}${period}` : `${hour12}:${String(m).padStart(2, "0")}${period}`;
+}
+
+/**
+ * Human-readable date+time range for a calendar event, e.g. "5:30pm–7:00pm"
+ * (today) or "Jul 12, 5:30pm–7:00pm" (another day). Computed from the actual
+ * event data rather than trusting the AI's free-text before/after strings,
+ * which drift in format and can't be fully trusted for display.
+ */
+export function formatEventSlot(event: CalendarEvent, lang: Lang): string {
+  const start = formatTime(event.startTime, lang);
+  const [h, m] = event.startTime.split(":").map(Number);
+  const endMinutes = h * 60 + m + event.durationMinutes;
+  const end = formatTime(`${Math.floor(endMinutes / 60) % 24}:${String(endMinutes % 60).padStart(2, "0")}`, lang);
+  const range = `${start}–${end}`;
+  if (event.date === todayISODate()) return range;
+  const dateLabel = new Date(`${event.date}T00:00:00`).toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US", {
+    month: "short",
+    day: "numeric",
+  });
+  return `${dateLabel}, ${range}`;
 }
 
 /** Human-readable summary shown on the goal card, e.g. "Weekdays · 9:00am–5:00pm". */

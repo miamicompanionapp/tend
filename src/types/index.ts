@@ -60,11 +60,20 @@ export interface PlanDiffEntry {
   event?: CalendarEvent;
 }
 
+export interface ReplanHistoryTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export interface ReplanRequest {
   message: string;
   goals: Goal[];
   events: CalendarEvent[];
   language?: Lang;
+  /** Local "YYYY-MM-DDTHH:mm" — ground truth for "now", so the assistant isn't guessing the current time. */
+  now?: string;
+  /** Prior turns in this conversation, so follow-ups ("that's too early") have context. */
+  history?: ReplanHistoryTurn[];
 }
 
 export interface ReplanResponse {

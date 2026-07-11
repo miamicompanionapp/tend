@@ -203,6 +203,52 @@ data. Phases below are ranked; work top to bottom.
         time-grid blocks (especially inset ones) truncate their title —
         users sometimes can't tell what a short bubble actually is without
         this.
+20. [x] Assistant replan correctness bugs — DONE 2026-07-11, reported by
+        Abdullah with a real transcript: asked for a 6-9pm art exhibit
+        while dinner (5:30-7pm) and a rideshare shift (7:30pm-1:30am)
+        already existed. Tend moved dinner to 4:15pm — in the past, since
+        it was already past 5pm — then in a follow-up turn claimed the
+        current time was "16:52" (fabricated) and never actually resolved
+        the rideshare/exhibit overlap across 3 turns. Three real bugs, all
+        fixed:
+        - **No time grounding.** `/api/replan` never told Claude what time
+          it actually was — it only had the user's message text to infer
+          from, so it hallucinated a "current time" instead of reading a
+          clock. Added `ReplanRequest.now` (local `YYYY-MM-DDTHH:mm` via
+          new `lib/date.ts` `nowLocalISO()`), sent on every Assistant
+          message. The system prompt states it as ground truth and
+          explicitly forbids scheduling anything before it.
+        - **Forced tool_choice suppressed reasoning.** Grounding alone
+          wasn't enough — first attempt still moved dinner into the past
+          even with `now` in the prompt. Root cause: `tool_choice: {type:
+          "tool", ...}` forces an immediate structured answer with no
+          deliberation. Switched to `tool_choice: "auto"` + `thinking:
+          {type: "adaptive"}` and added an explicit self-check instruction
+          ("work through the arithmetic... if a first attempt lands in the
+          past, it's invalid, find a real slot"). Verified this was the
+          fix, not just the grounding — same test scenario, dinner now
+          correctly lands after the exhibit (9-10:30pm) instead of before
+          "now".
+        - **No conversation memory.** Each Assistant message was a fully
+          independent request — the backend never saw what it had
+          previously proposed, which is why the "it's already 4:55"
+          follow-up produced a non-sequitur (Claude had no idea what
+          "4:15" referred to). Added `ReplanRequest.history` (prior turns
+          as plain user/assistant content, diffs serialized to text via
+          `describeDiffForHistory()`, noting whether each was actually
+          applied), threaded from `AssistantScreen.tsx` through to real
+          multi-turn `messages[]` in `functions/api/replan.ts`.
+        - **Bonus fix, same investigation**: diff-card before/after text
+          was free text Claude wrote itself and drifted in format
+          (`"5:30 PM–7:00 PM"` in one turn, `"2026-07-11 17:30"` in
+          another). `AssistantScreen.tsx` now computes before/after
+          display purely from the actual event data (new
+          `schedule.ts` `formatEventSlot()`) instead of trusting the AI's
+          strings for anything except the reason text.
+        - Verified end-to-end via Playwright reproducing the reported
+          scenario almost exactly (art exhibit vs. dinner vs. rideshare,
+          real device clock ~5:10pm): dinner and rideshare both land after
+          the exhibit, nothing overlaps, nothing is scheduled in the past.
 18. [x] PWA install gate — DONE 2026-07-11. Ported the same pattern used in
         `miami-ride-companion` (a full-screen "add to home screen" page that
         auto-hides once the app is actually installed), adapted to React:

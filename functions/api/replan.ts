@@ -50,10 +50,20 @@ const LANGUAGE_INSTRUCTION: Record<Lang, string> = {
   tr: "Write the summary, every reason, and any event titles you invent in Turkish (Türkçe) — natural, fluent Turkish, not machine-translated phrasing.",
 };
 
-function buildSystemPrompt(lang: Lang): string {
-  return `You are Tend's scheduling assistant. The user will describe a disruption to their day (an emergency, a cancellation, running late, etc). You have their goals (with priority and kind) and their current calendar events for today.
+function buildSystemPrompt(lang: Lang, now: string | undefined): string {
+  const nowLine = (() => {
+    if (!now) return "";
+    const parsed = new Date(now);
+    if (Number.isNaN(parsed.getTime())) return "";
+    const weekday = parsed.toLocaleDateString("en-US", { weekday: "long" });
+    const time = parsed.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    return `\nCurrent date and time: ${now} (${weekday}, ${time}). This is ground truth from the device's clock — treat it as authoritative over anything the user's message implies about what time it is. Never schedule or move any event to start before this moment today; if the only way to fit something requires a slot that has already passed, move the lower-priority item to a different day instead of into the past.\n`;
+  })();
 
-Decide the minimal set of changes needed to accommodate the disruption:
+  return `You are Tend's scheduling assistant. The user will describe a disruption to their day (an emergency, a cancellation, running late, etc). You have their goals (with priority and kind) and their current calendar events for today.
+${nowLine}
+Decide the changes needed to fully accommodate the disruption:
+- Resolve every scheduling conflict your changes create or that already exists because of the disruption — do not leave two events overlapping and mention it as something the user should "adjust separately." If fixing one conflict creates another, keep adjusting (a different time, a different day, or cancelling if truly necessary) until nothing on today's plan overlaps.
 - Prefer moving or shrinking low/medium priority, non-locked events over cancelling high-priority ones.
 - Never silently move or cancel an event with locked: true — only note it if directly relevant, and prefer working around it.
 - If nothing on the calendar conflicts with the disruption, return an empty diff and say so in the summary.
@@ -61,6 +71,7 @@ Decide the minimal set of changes needed to accommodate the disruption:
 - eventId must match an id from the provided events list (or the goal id, for a cancelled recurring instance that isn't yet a concrete event).
 - For "moved" entries, include an 'event' object with the full resulting event: same id as eventId, same title/category/durationMinutes unless those genuinely changed, and the new date/startTime. For "added" entries, include an 'event' object with a new unique id. Omit 'event' for "cancelled" and "kept".
 - ${LANGUAGE_INSTRUCTION[lang]} Do not translate the user's own existing event/goal titles — keep those exactly as given.
+- Before you finalize your answer, work through the arithmetic explicitly for every event you move or add: does the exact date+startTime you chose fall before the current date+time given above? If a first attempt at a slot lands in the past (e.g. "move it 90 minutes earlier" would start before now), that attempt is invalid — do not use it. Find an actual valid slot (later the same day, or a different day) instead, and only then write your final answer.
 - Output only via the tool call — no prose outside it.`;
 }
 
@@ -84,16 +95,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const language: Lang = body.language === "tr" ? "tr" : "en";
+  const historyMessages = (body.history ?? []).map((h) => ({ role: h.role, content: h.content }));
 
   try {
     const response = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 4096,
-      system: buildSystemPrompt(language),
+      system: buildSystemPrompt(language, body.now),
+      thinking: { type: "adaptive" },
       messages: [
+        ...historyMessages,
         {
           role: "user",
-          content: `Disruption: ${body.message}\n\nGoals:\n${JSON.stringify(body.goals, null, 2)}\n\nToday's events:\n${JSON.stringify(body.events, null, 2)}`,
+          content: `Current date and time: ${body.now ?? "(not provided)"}\n\nDisruption: ${body.message}\n\nGoals:\n${JSON.stringify(body.goals, null, 2)}\n\nToday's events:\n${JSON.stringify(body.events, null, 2)}\n\nWork through the scheduling arithmetic, then call return_replan with your final answer.`,
         },
       ],
       tools: [
@@ -103,7 +117,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           input_schema: DIFF_SCHEMA,
         },
       ],
-      tool_choice: { type: "tool", name: "return_replan" },
+      tool_choice: { type: "auto" },
     });
 
     const toolUse = response.content.find((block) => block.type === "tool_use");
