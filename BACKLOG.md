@@ -97,12 +97,15 @@ data. Phases below are ranked; work top to bottom.
        artifact and was never in `WeekScreen.tsx`, which is why it never
        showed up after deploying. Verified via Playwright at 9:30pm local:
        line renders exactly between the 9pm and 10pm gridlines.
-9. [ ] Overlap layout: short events (e.g. Lunch) inset over longer ones (e.g.
-       Work) instead of stacking flush. Current `layoutDay()` in
-       `timeGridLayout.ts` does side-by-side column splitting (a real
-       improvement over the old static chip-stack, and correct for
-       genuinely concurrent events) but not the "small event insets into
-       big event" treatment the mock had — still open.
+9. [x] Overlap layout: short events inset over longer ones — DONE 2026-07-10.
+       `layoutDay()` now finds, per overlap cluster, a "host" event (≥120
+       min) that fully contains a short event (≤60 min) and renders the
+       short one as a smaller layered card over the host's right edge
+       (`.day-track-event.inset` — elevated z-index + shadow) instead of
+       splitting both into half-width columns. Events that don't fit that
+       host/short-guest pattern (e.g. two genuinely concurrent meetings)
+       still use the side-by-side column split from #7. Verified visually:
+       Lunch now insets into Work instead of shrinking it to half width.
 10. [ ] Wire the Assistant screen's diff-approval flow to actually call
         `applyEvents()` (already exists in `usePlanner.ts`, just unused) —
         see the TODO in `src/components/AssistantScreen.tsx`.

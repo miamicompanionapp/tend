@@ -16,10 +16,10 @@ export function DayTrack({ date, events }: { date: string; events: CalendarEvent
 
   return (
     <div className="day-track" style={{ height: GRID_HEIGHT }}>
-      {laidOut.map(({ event, top, height, leftPct, widthPct }) => (
+      {laidOut.map(({ event, top, height, leftPct, widthPct, inset }) => (
         <div
           key={event.id}
-          className={`day-track-event ${eventStyleClass(event)}`}
+          className={`day-track-event ${eventStyleClass(event)}${inset ? " inset" : ""}`}
           style={{ top, height, left: `${leftPct}%`, width: `calc(${widthPct}% - 4px)` }}
         >
           <p className="day-track-event-title">{event.title}</p>
