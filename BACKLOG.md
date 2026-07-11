@@ -249,6 +249,26 @@ data. Phases below are ranked; work top to bottom.
           scenario almost exactly (art exhibit vs. dinner vs. rideshare,
           real device clock ~5:10pm): dinner and rideshare both land after
           the exhibit, nothing overlaps, nothing is scheduled in the past.
+21. [x] Planning notes weren't sent to replan — DONE 2026-07-11, flagged by
+        Abdullah asking whether a standing preference like "never go to bed
+        later than 2 AM" would actually reach the Assistant when resolving
+        a conflict. It didn't: `ReplanRequest` had no `notes` field,
+        `AssistantScreen` didn't even receive `notes` as a prop, so
+        onboarding/Goals-page preferences only ever influenced the initial
+        `/api/generate-plan` call and were invisible to every disruption
+        message after that. Added `notes` to `ReplanRequest`, threaded
+        `usePlanner`'s `notes` through `App.tsx` → `AssistantScreen.tsx` →
+        `requestReplan`, and `functions/api/replan.ts`'s system prompt now
+        includes them as standing constraints the disruption-resolution
+        logic must also respect. Verified via curl with a "never past 2
+        AM" note: the assistant explicitly cited "your 2 AM cutoff" and
+        moved a 6-hour shift to the next day entirely, instead of the
+        previous behavior of pushing it to end at 4:30am.
+22. [x] Moved "Generate plan" CTA on the Goals screen — DONE 2026-07-11,
+        requested by Abdullah. Was directly under the goal list, above
+        "+ Add a goal"; now sits at the very bottom, after the "Anything
+        Tend should know?" notes textarea, so notes are naturally filled
+        in before generating rather than being easy to miss above the fold.
 18. [x] PWA install gate — DONE 2026-07-11. Ported the same pattern used in
         `miami-ride-companion` (a full-screen "add to home screen" page that
         auto-hides once the app is actually installed), adapted to React:

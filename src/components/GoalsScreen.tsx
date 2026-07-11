@@ -200,16 +200,6 @@ export function GoalsScreen({
         ),
       )}
 
-      <button
-        className="btn primary"
-        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 14 }}
-        onClick={onGeneratePlan}
-        disabled={planLoading}
-      >
-        {planLoading && <span className="spinner" style={{ borderColor: "rgba(246,244,238,0.35)", borderTopColor: "#f6f4ee" }} />}
-        {planLoading ? t.goals.generating : t.goals.generatePlan}
-      </button>
-
       {adding ? (
         <div className="goal-card goal-form" style={{ flexDirection: "column", alignItems: "stretch", gap: 14 }}>
           <div>
@@ -362,7 +352,7 @@ export function GoalsScreen({
         </button>
       )}
 
-      <div style={{ marginTop: 20 }}>
+      <div style={{ marginTop: 20, marginBottom: 20 }}>
         <p className="field-label">{t.goals.notesLabel}</p>
         <textarea
           placeholder={t.goals.notesPlaceholder}
@@ -373,6 +363,16 @@ export function GoalsScreen({
         />
         <p className="field-hint">{t.goals.notesHint}</p>
       </div>
+
+      <button
+        className="btn primary"
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+        onClick={onGeneratePlan}
+        disabled={planLoading}
+      >
+        {planLoading && <span className="spinner" style={{ borderColor: "rgba(246,244,238,0.35)", borderTopColor: "#f6f4ee" }} />}
+        {planLoading ? t.goals.generating : t.goals.generatePlan}
+      </button>
     </div>
   );
 }

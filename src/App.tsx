@@ -114,6 +114,7 @@ function App() {
           <AssistantScreen
             goals={goals}
             events={todayEvents}
+            notes={notes}
             onApplyDiff={handleApplyDiff}
             quality={quality}
             onQualityChange={setQuality}

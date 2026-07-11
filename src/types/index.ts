@@ -74,6 +74,8 @@ export interface ReplanRequest {
   now?: string;
   /** Prior turns in this conversation, so follow-ups ("that's too early") have context. */
   history?: ReplanHistoryTurn[];
+  /** Same free-text preferences sent to generate-plan — ongoing concerns/directions the user gave, not just for initial creation. */
+  notes?: string;
 }
 
 export interface ReplanResponse {

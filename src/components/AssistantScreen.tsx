@@ -37,12 +37,14 @@ function describeDiffForHistory(diff: DisplayDiffEntry[], applied: boolean): str
 export function AssistantScreen({
   goals,
   events,
+  notes,
   onApplyDiff,
   quality,
   onQualityChange,
 }: {
   goals: Goal[];
   events: CalendarEvent[];
+  notes: string;
   onApplyDiff: (diff: PlanDiffEntry[]) => void;
   quality: PlanQuality;
   onQualityChange: (q: PlanQuality) => void;
@@ -68,7 +70,7 @@ export function AssistantScreen({
     setTurns((prev) => [...prev, { role: "user", text: message }]);
     setLoading(true);
     try {
-      const response = await requestReplan({ message, goals, events, language: lang, now: nowLocalISO(), history });
+      const response = await requestReplan({ message, goals, events, language: lang, now: nowLocalISO(), history, notes: notes || undefined });
       // Compute before/after display from the real event data (not the AI's
       // free-text before/after, which drifts in format and can't be fully
       // trusted) — snapshot against `events` now, since it reflects the

@@ -50,7 +50,7 @@ const LANGUAGE_INSTRUCTION: Record<Lang, string> = {
   tr: "Write the summary, every reason, and any event titles you invent in Turkish (Türkçe) — natural, fluent Turkish, not machine-translated phrasing.",
 };
 
-function buildSystemPrompt(lang: Lang, now: string | undefined): string {
+function buildSystemPrompt(lang: Lang, now: string | undefined, notes: string | undefined): string {
   const nowLine = (() => {
     if (!now) return "";
     const parsed = new Date(now);
@@ -72,7 +72,7 @@ Decide the changes needed to fully accommodate the disruption:
 - For "moved" entries, include an 'event' object with the full resulting event: same id as eventId, same title/category/durationMinutes unless those genuinely changed, and the new date/startTime. For "added" entries, include an 'event' object with a new unique id. Omit 'event' for "cancelled" and "kept".
 - ${LANGUAGE_INSTRUCTION[lang]} Do not translate the user's own existing event/goal titles — keep those exactly as given.
 - Before you finalize your answer, work through the arithmetic explicitly for every event you move or add: does the exact date+startTime you chose fall before the current date+time given above? If a first attempt at a slot lands in the past (e.g. "move it 90 minutes earlier" would start before now), that attempt is invalid — do not use it. Find an actual valid slot (later the same day, or a different day) instead, and only then write your final answer.
-- Output only via the tool call — no prose outside it.`;
+${notes ? `- The user gave these standing preferences/constraints when setting up their goals — they apply here too, not just at initial plan creation. Honor them whenever they don't conflict with a fixed/locked goal: "${notes}"\n` : ""}- Output only via the tool call — no prose outside it.`;
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -101,7 +101,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const response = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 4096,
-      system: buildSystemPrompt(language, body.now),
+      system: buildSystemPrompt(language, body.now, body.notes),
       thinking: { type: "adaptive" },
       messages: [
         ...historyMessages,
