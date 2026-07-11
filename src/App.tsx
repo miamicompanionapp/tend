@@ -6,10 +6,12 @@ import { WeekScreen } from "./components/WeekScreen";
 import { AssistantScreen } from "./components/AssistantScreen";
 import { usePlanner } from "./state/usePlanner";
 import { addDays, getMonday, todayISODate, toISODate } from "./lib/date";
+import { applyDiff } from "./lib/diff";
+import type { PlanDiffEntry } from "./types";
 
 function App() {
   const [tab, setTab] = useState<TabId>("today");
-  const { goals, events, addGoal, removeGoal, regeneratePlan, planLoading, planError } = usePlanner();
+  const { goals, events, addGoal, removeGoal, applyEvents, regeneratePlan, planLoading, planError } = usePlanner();
 
   const weekStart = useMemo(() => toISODate(getMonday(new Date())), []);
   const today = todayISODate();
@@ -24,6 +26,8 @@ function App() {
     const fmt = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     return `${fmt(weekStart)} – ${fmt(addDays(weekStart, 6))}`;
   }, [tab, today, weekStart]);
+
+  const handleApplyDiff = (diff: PlanDiffEntry[]) => applyEvents(applyDiff(events, diff));
 
   return (
     <div className="app-shell">
@@ -60,7 +64,7 @@ function App() {
         {tab === "goals" && <GoalsScreen goals={goals} onAdd={addGoal} onRemove={removeGoal} />}
         {tab === "today" && <TodayScreen events={events} loading={planLoading} />}
         {tab === "week" && <WeekScreen events={events} weekStart={weekStart} />}
-        {tab === "assistant" && <AssistantScreen goals={goals} events={todayEvents} />}
+        {tab === "assistant" && <AssistantScreen goals={goals} events={todayEvents} onApplyDiff={handleApplyDiff} />}
       </div>
       <TabBar active={tab} onChange={setTab} />
     </div>

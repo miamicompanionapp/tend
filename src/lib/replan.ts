@@ -1,4 +1,5 @@
 import type { ReplanRequest, ReplanResponse } from "../types";
+import { addDays } from "./date";
 
 /**
  * Sends the current goals + events plus a free-text disruption to the planning
@@ -49,6 +50,7 @@ function mockReplan(req: ReplanRequest): ReplanResponse {
               before: `today ${run.startTime}`,
               after: "tomorrow, same time",
               reason: "Lower priority than an urgent vet visit",
+              event: { ...run, date: addDays(run.date, 1) },
             },
           ]
         : []),

@@ -17,6 +17,24 @@ const DIFF_SCHEMA: Anthropic.Tool.InputSchema = {
           before: { type: "string", description: "human-readable previous slot, if applicable" },
           after: { type: "string", description: "human-readable new slot, if applicable" },
           reason: { type: "string" },
+          event: {
+            type: "object",
+            description:
+              "Required when action is 'moved' or 'added': the event's resulting state, so the app can actually apply this change. Omit for 'cancelled' and 'kept'.",
+            properties: {
+              id: { type: "string", description: "same as eventId for 'moved'; a new unique id for 'added'" },
+              goalId: { type: "string" },
+              title: { type: "string" },
+              category: { type: "string", enum: ["work", "health", "home", "social", "human"] },
+              date: { type: "string", description: "ISO date, e.g. 2026-07-13" },
+              startTime: { type: "string", description: "24-hour HH:mm" },
+              durationMinutes: { type: "integer" },
+              autoAdded: { type: "boolean" },
+              locked: { type: "boolean" },
+            },
+            required: ["id", "title", "category", "date", "startTime", "durationMinutes"],
+            additionalProperties: false,
+          },
         },
         required: ["action", "eventId", "title", "reason"],
         additionalProperties: false,
@@ -35,6 +53,7 @@ Decide the minimal set of changes needed to accommodate the disruption:
 - If nothing on the calendar conflicts with the disruption, return an empty diff and say so in the summary.
 - Each diff entry needs a clear one-sentence reason a person would find satisfying, referencing priority or the disruption itself.
 - eventId must match an id from the provided events list (or the goal id, for a cancelled recurring instance that isn't yet a concrete event).
+- For "moved" entries, include an 'event' object with the full resulting event: same id as eventId, same title/category/durationMinutes unless those genuinely changed, and the new date/startTime. For "added" entries, include an 'event' object with a new unique id. Omit 'event' for "cancelled" and "kept".
 - Output only via the tool call — no prose outside it.`;
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {

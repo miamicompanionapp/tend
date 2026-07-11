@@ -54,6 +54,8 @@ export interface PlanDiffEntry {
   before?: string; // human-readable previous slot
   after?: string; // human-readable new slot
   reason: string;
+  /** Required for "moved" and "added": the event's resulting state, so the diff can actually be applied. */
+  event?: CalendarEvent;
 }
 
 export interface ReplanRequest {

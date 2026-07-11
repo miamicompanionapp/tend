@@ -15,7 +15,15 @@ const DIFF_ICON: Record<PlanDiffEntry["action"], string> = {
   added: "+",
 };
 
-export function AssistantScreen({ goals, events }: { goals: Goal[]; events: CalendarEvent[] }) {
+export function AssistantScreen({
+  goals,
+  events,
+  onApplyDiff,
+}: {
+  goals: Goal[];
+  events: CalendarEvent[];
+  onApplyDiff: (diff: PlanDiffEntry[]) => void;
+}) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [pendingDiff, setPendingDiff] = useState<PlanDiffEntry[] | null>(null);
@@ -34,6 +42,13 @@ export function AssistantScreen({ goals, events }: { goals: Goal[]; events: Cale
     } finally {
       setLoading(false);
     }
+  }
+
+  function applyPendingDiff() {
+    if (!pendingDiff) return;
+    onApplyDiff(pendingDiff);
+    setPendingDiff(null);
+    setTurns((prev) => [...prev, { role: "ai", text: "Applied — your calendar is updated." }]);
   }
 
   return (
@@ -71,14 +86,7 @@ export function AssistantScreen({ goals, events }: { goals: Goal[]; events: Cale
             <button className="btn secondary" onClick={() => setPendingDiff(null)}>
               Adjust
             </button>
-            <button
-              className="btn primary"
-              onClick={() => {
-                // TODO: actually apply the diff to events via applyEvents() once
-                // the diff format carries enough info (new date/time) to do so.
-                setPendingDiff(null);
-              }}
-            >
+            <button className="btn primary" onClick={applyPendingDiff}>
               Apply plan
             </button>
           </div>

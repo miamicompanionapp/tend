@@ -106,9 +106,23 @@ data. Phases below are ranked; work top to bottom.
        host/short-guest pattern (e.g. two genuinely concurrent meetings)
        still use the side-by-side column split from #7. Verified visually:
        Lunch now insets into Work instead of shrinking it to half width.
-10. [ ] Wire the Assistant screen's diff-approval flow to actually call
-        `applyEvents()` (already exists in `usePlanner.ts`, just unused) —
-        see the TODO in `src/components/AssistantScreen.tsx`.
+10. [x] Wire the Assistant screen's diff-approval flow to actually call
+        `applyEvents()` — DONE 2026-07-10. `PlanDiffEntry` gained an
+        optional `event` field (the resulting `CalendarEvent` state) —
+        required for "moved"/"added", omitted for "cancelled"/"kept".
+        `/api/replan`'s schema and system prompt updated to require it.
+        New `src/lib/diff.ts` (`applyDiff`) turns a diff into a new events
+        array: cancelled → filtered out, moved/added → upserted by id,
+        kept → no-op. `AssistantScreen` takes an `onApplyDiff` prop wired
+        in `App.tsx` to `applyEvents(applyDiff(events, diff))`, and posts
+        an "Applied — your calendar is updated." confirmation bubble.
+        Verified end-to-end via Playwright: sent a vet-emergency
+        disruption, clicked Apply, confirmed Today actually re-rendered
+        with Exercise moved 17:30→18:00 and a new "Emergency vet visit"
+        event added — this exercises "moved" and "added" both applying
+        correctly in one real Claude response, not just the mock.
+
+**Phase 3 complete.**
 
 ### Phase 4 — Ship & validate
 11. [ ] Confirm the Cloudflare Pages "Connect to Git" step was completed
