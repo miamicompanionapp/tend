@@ -1,4 +1,4 @@
-import type { Goal, CalendarEvent } from "../types";
+import type { Goal } from "../types";
 
 export const seedGoals: Goal[] = [
   {
@@ -61,13 +61,4 @@ export const seedGoals: Goal[] = [
     timePreference: "evening",
     durationMinutes: 90,
   },
-];
-
-export const seedEvents: CalendarEvent[] = [
-  { id: "ev-1", title: "Breakfast", category: "human", date: "2026-07-09", startTime: "07:30", durationMinutes: 30, autoAdded: true },
-  { id: "ev-2", goalId: "goal-work", title: "Work", category: "work", date: "2026-07-09", startTime: "09:00", durationMinutes: 480, locked: true },
-  { id: "ev-3", title: "Lunch", category: "human", date: "2026-07-09", startTime: "12:30", durationMinutes: 30, autoAdded: true },
-  { id: "ev-4", goalId: "goal-exercise", title: "Exercise — run", category: "health", date: "2026-07-09", startTime: "17:30", durationMinutes: 45 },
-  { id: "ev-5", title: "Dinner", category: "human", date: "2026-07-09", startTime: "19:00", durationMinutes: 45, autoAdded: true },
-  { id: "ev-6", goalId: "goal-tidy", title: "Tidy up", category: "home", date: "2026-07-09", startTime: "20:00", durationMinutes: 15 },
 ];

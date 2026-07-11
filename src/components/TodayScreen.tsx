@@ -14,8 +14,16 @@ function formatTime(startTime: string): string {
   return m === 0 ? `${hour12}${period}` : `${hour12}:${String(m).padStart(2, "0")}${period}`;
 }
 
-export function TodayScreen({ events }: { events: CalendarEvent[] }) {
+export function TodayScreen({ events, loading }: { events: CalendarEvent[]; loading: boolean }) {
   const sorted = [...events].sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  if (sorted.length === 0) {
+    return (
+      <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", marginTop: 60 }}>
+        {loading ? "Planning your day…" : "Nothing planned for today yet. Add a goal to get started."}
+      </p>
+    );
+  }
 
   return (
     <div>

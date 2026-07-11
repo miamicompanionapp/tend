@@ -62,9 +62,22 @@ data. Phases below are ranked; work top to bottom.
        used for both the goal card and future AI prompt text.
 
 ### Phase 3 — Wire real data through the UI
-6. [ ] Call `/api/generate-plan` when goals change (or on a manual "Regenerate
-       week" action) and store the result via `usePlanner`, replacing
-       `seedEvents` as the source of truth.
+6. [x] Call `/api/generate-plan` when goals change (or on a manual "Regenerate
+       week" action) and store the result via `usePlanner` — DONE 2026-07-10.
+       `usePlanner` now calls the endpoint on mount and whenever `goals`
+       changes (add/remove), storing the real week of events via
+       `applyEvents`. `seedEvents` and the hardcoded 2026-07-09 date are
+       gone entirely — `src/data/seed.ts` only seeds goals now. Added
+       `src/lib/date.ts` (local-timezone-safe ISO date helpers) so
+       Today/Week compute the real current date and Monday-start week
+       instead of hardcoding "Wed, Jul 9". Added a manual "↻ Regenerate"
+       button in the app bar and a loading/error state surfaced on
+       Today/Week. `TodayScreen` now filters `events` to just today's date
+       (it previously rendered every event with no date filter — harmless
+       with one seed day, would've been wrong with a real week). Verified
+       via Playwright against `wrangler pages dev`: real dates render,
+       today's column highlights in the Week grid, adding a goal
+       re-triggers generation.
 7. [ ] Port the time-grid Week view mock into `WeekScreen.tsx` — hourly grid,
        day-strip on phone / 7-column on landscape, positioned by `startTime` +
        `durationMinutes` instead of the static chip-stack.

@@ -1,16 +1,18 @@
-// TODO: derive this from `goals` + the scheduling engine once it exists.
-// For now it's a static illustration of the week-grid layout described in the mockup.
-const WEEK = [
-  { label: "MON", chips: [{ t: "Work", c: "" }, { t: "Run", c: "health" }, { t: "Tidy", c: "home" }] },
-  { label: "TUE", chips: [{ t: "Work", c: "" }, { t: "Tidy", c: "home" }] },
-  { label: "WED", today: true, chips: [{ t: "Work", c: "" }, { t: "Run", c: "health" }, { t: "Tidy", c: "home" }] },
-  { label: "THU", chips: [{ t: "Work", c: "" }, { t: "Groceries", c: "home" }, { t: "Tidy", c: "home" }] },
-  { label: "FRI", chips: [{ t: "Work", c: "" }, { t: "Run", c: "health" }, { t: "Tidy", c: "home" }] },
-  { label: "SAT", chips: [{ t: "Biking", c: "health" }, { t: "Family dinner", c: "social" }] },
-  { label: "SUN", chips: [{ t: "Tidy", c: "home" }] },
-];
+import type { CalendarEvent } from "../types";
+import { addDays, todayISODate, weekdayLabel } from "../lib/date";
 
-export function WeekScreen() {
+function chipClass(event: CalendarEvent): string {
+  if (event.autoAdded || event.category === "human") return "human";
+  if (event.category === "health") return "health";
+  if (event.category === "home") return "home";
+  if (event.category === "social") return "social";
+  return "";
+}
+
+export function WeekScreen({ events, weekStart }: { events: CalendarEvent[]; weekStart: string }) {
+  const today = todayISODate();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
   return (
     <div>
       <div className="week-portrait-hint">
@@ -19,16 +21,21 @@ export function WeekScreen() {
         </p>
       </div>
       <div className="week-grid">
-        {WEEK.map((day) => (
-          <div className={`week-day${day.today ? " today" : ""}`} key={day.label}>
-            <span className="week-day-label">{day.label}</span>
-            {day.chips.map((chip, i) => (
-              <span className={`week-chip ${chip.c}`} key={i}>
-                {chip.t}
-              </span>
-            ))}
-          </div>
-        ))}
+        {days.map((date) => {
+          const dayEvents = events
+            .filter((e) => e.date === date)
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
+          return (
+            <div className={`week-day${date === today ? " today" : ""}`} key={date}>
+              <span className="week-day-label">{weekdayLabel(date)}</span>
+              {dayEvents.map((event) => (
+                <span className={`week-chip ${chipClass(event)}`} key={event.id}>
+                  {event.title}
+                </span>
+              ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
