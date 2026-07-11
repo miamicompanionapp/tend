@@ -1,6 +1,6 @@
 # Tend — Backlog & Working Notes
 
-Last updated: 2026-07-10
+Last updated: 2026-07-11
 Owner: Abdullah
 
 
@@ -150,6 +150,59 @@ data. Phases below are ranked; work top to bottom.
         auto-deploy once Abdullah approves a push.
 12. [ ] Manual end-to-end test on a phone: add a goal, regenerate the week,
         report a disruption in Assistant, confirm the diff applies.
+
+### Phase 5 — Pre-beta polish (requested 2026-07-11)
+14. [ ] Preserve Assistant chat history. `turns` in `AssistantScreen.tsx` is
+        local component state — switching tabs or reloading loses the whole
+        conversation. Persist it (localStorage, same pattern as
+        goals/events in `usePlanner.ts`) so it survives navigation/reload.
+15. [ ] Show a loading spinner in the Assistant chat itself after the user
+        sends a message, until the `/api/replan` response arrives. Right
+        now the only feedback is the composer's send button going disabled
+        — nothing in the conversation flow signals "thinking."
+17. [x] Onboarding + manual-only generation — DONE 2026-07-11. Auto-generation
+        was too eager: it fired on mount and on every goal/quality change,
+        burning an API call before the user had finished setting things up.
+        Reworked the whole first-run and generation flow:
+        - **Onboarding**: new `OnboardingScreen.tsx`, shown once (localStorage
+          `tend.onboarded`) before the tab UI. Explains the 3-step flow (set
+          goals → tap Generate plan → tell the Assistant when life happens),
+          and lets the user set their quality preference and "planning
+          notes" up front. "Let's set up your goals" completes onboarding
+          and lands on the Goals tab.
+        - **Manual generation only**: removed the `useEffect` in
+          `usePlanner.ts` that auto-called `regeneratePlan()` on mount and
+          on every goals/quality change. Generation now only happens when
+          the user explicitly taps a button. Verified via Playwright: no
+          `/api/generate-plan` request fires during onboarding, right after
+          completing it, or on visiting an empty Today/Week.
+        - **Generate plan button**: added to `GoalsScreen.tsx` as the
+          primary CTA below the goal list (goals → review → generate is
+          the intended order). `TodayScreen`/`WeekScreen` also show a
+          "Generate plan" button in their empty state as a convenience
+          shortcut, so a user who already has goals set doesn't have to
+          detour through Goals just to trigger it. The header's manual
+          "↻ Regenerate" link (Today/Week) is unchanged — still a one-tap
+          re-run once a plan exists.
+        - **Quality toggle relocated**: moved from the Today/Week app-bar
+          into `AssistantScreen.tsx` (top of the chat), since that's where
+          the user is thinking about plan behavior, not on every calendar
+          view. Toggling it only updates the stored preference — it no
+          longer triggers a regeneration itself (supersedes that part of
+          Phase 3 item 13).
+        - **Planning notes**: new `notes` field in `usePlanner`
+          (localStorage `tend.planningNotes`), editable from both
+          onboarding and a persistent textarea on the Goals screen ("Anything
+          Tend should know?"). Sent as `GeneratePlanRequest.notes` on every
+          generate-plan call; `functions/api/generate-plan.ts`'s system
+          prompt now includes it as an instruction Claude should follow
+          when it doesn't conflict with a fixed/locked goal.
+16. [ ] Tapping an event box in the calendar (Today/Week time-grid) should
+        open a popup/detail card with the full event info (title, category,
+        exact time range, duration, locked/auto-added status). Small
+        time-grid blocks (especially inset ones) truncate their title —
+        users sometimes can't tell what a short bubble actually is without
+        this.
 
 ### Not in MVP scope (parked)
 - [ ] Decide whether localStorage-only persistence (`usePlanner.ts`) is

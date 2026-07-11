@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { CalendarEvent, Goal, PlanDiffEntry } from "../types";
+import type { CalendarEvent, Goal, PlanDiffEntry, PlanQuality } from "../types";
 import { requestReplan } from "../lib/replan";
 
 interface Turn {
@@ -19,10 +19,14 @@ export function AssistantScreen({
   goals,
   events,
   onApplyDiff,
+  quality,
+  onQualityChange,
 }: {
   goals: Goal[];
   events: CalendarEvent[];
   onApplyDiff: (diff: PlanDiffEntry[]) => void;
+  quality: PlanQuality;
+  onQualityChange: (q: PlanQuality) => void;
 }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
@@ -53,6 +57,17 @@ export function AssistantScreen({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px 0" }}>
+        <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Plan quality</span>
+        <div className="quality-toggle">
+          <button className={quality === "careful" ? "active" : ""} onClick={() => onQualityChange("careful")}>
+            Careful
+          </button>
+          <button className={quality === "fast" ? "active" : ""} onClick={() => onQualityChange("fast")}>
+            Fast
+          </button>
+        </div>
+      </div>
       <div style={{ flex: 1, overflowY: "auto" }}>
         {turns.map((turn, i) => (
           <div key={i}>

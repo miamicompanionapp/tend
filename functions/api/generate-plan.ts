@@ -44,7 +44,7 @@ function dateRange(startDate: string, days: number): string[] {
   });
 }
 
-function buildSystemPrompt(dates: string[]): string {
+function buildSystemPrompt(dates: string[], notes: string | undefined): string {
   const dayLines = dates
     .map((date) => {
       const weekday = new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
@@ -63,7 +63,7 @@ Rules:
 - Always add Breakfast (~07:30, 30 min), Lunch (~12:30, 30 min), and Dinner (~19:00, 45 min) each day as separate events with category "human" and autoAdded: true, unless a fixed/locked event already occupies that slot — skip or shift slightly to avoid overlap in that case.
 - Never produce two events for the same date whose time ranges overlap.
 - Give every event a unique id, e.g. "ev-<goalId or slug>-<date>".
-- Output only via the tool call — no prose.`;
+${notes ? `- The user gave these special instructions/preferences — follow them whenever they don't conflict with a fixed/locked goal: "${notes}"\n` : ""}- Output only via the tool call — no prose.`;
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -93,7 +93,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const response = await client.messages.create({
       model,
       max_tokens: 8192,
-      system: buildSystemPrompt(dates),
+      system: buildSystemPrompt(dates, body.notes),
       messages: [
         {
           role: "user",

@@ -4,19 +4,32 @@ import { HOUR_HEIGHT } from "../lib/timeGridLayout";
 import { HourRuler } from "./HourRuler";
 import { DayTrack } from "./DayTrack";
 
-export function TodayScreen({ events, loading }: { events: CalendarEvent[]; loading: boolean }) {
+export function TodayScreen({
+  events,
+  loading,
+  onGeneratePlan,
+}: {
+  events: CalendarEvent[];
+  loading: boolean;
+  onGeneratePlan: () => void;
+}) {
   const today = todayISODate();
   const hasEvents = events.some((e) => e.date === today);
 
   if (!hasEvents) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginTop: 60 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 60, padding: "0 20px" }}>
         {loading && <span className="spinner" style={{ width: 18, height: 18, borderWidth: 3 }} />}
-        <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", margin: 0, maxWidth: "26ch" }}>
+        <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", margin: 0, maxWidth: "28ch" }}>
           {loading
             ? "Planning your day… this can take up to 30 seconds, especially on Careful mode."
-            : "Nothing planned for today yet. Add a goal to get started."}
+            : "No plan yet. Set up your goals, then generate a plan for the week."}
         </p>
+        {!loading && (
+          <button className="btn primary" style={{ flex: "none", padding: "10px 20px" }} onClick={onGeneratePlan}>
+            Generate plan
+          </button>
+        )}
       </div>
     );
   }

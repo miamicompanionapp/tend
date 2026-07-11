@@ -9,7 +9,15 @@ function dayNumber(dateStr: string): string {
   return String(Number(dateStr.split("-")[2]));
 }
 
-export function WeekScreen({ events, weekStart }: { events: CalendarEvent[]; weekStart: string }) {
+export function WeekScreen({
+  events,
+  weekStart,
+  onGeneratePlan,
+}: {
+  events: CalendarEvent[];
+  weekStart: string;
+  onGeneratePlan: () => void;
+}) {
   const today = todayISODate();
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const [selected, setSelected] = useState(() => (days.includes(today) ? today : days[0]));
@@ -18,6 +26,19 @@ export function WeekScreen({ events, weekStart }: { events: CalendarEvent[]; wee
     backgroundImage: `repeating-linear-gradient(to bottom, var(--line) 0, var(--line) 1px, transparent 1px, transparent ${HOUR_HEIGHT}px)`,
     backgroundPosition: "0 1px",
   };
+
+  if (events.length === 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 60, padding: "0 20px" }}>
+        <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", margin: 0, maxWidth: "28ch" }}>
+          No plan yet. Set up your goals, then generate a plan for the week.
+        </p>
+        <button className="btn primary" style={{ flex: "none", padding: "10px 20px" }} onClick={onGeneratePlan}>
+          Generate plan
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>

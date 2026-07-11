@@ -115,10 +115,18 @@ export function GoalsScreen({
   goals,
   onAdd,
   onRemove,
+  notes,
+  onNotesChange,
+  onGeneratePlan,
+  planLoading,
 }: {
   goals: Goal[];
   onAdd: (goal: Goal) => void;
   onRemove: (id: string) => void;
+  notes: string;
+  onNotesChange: (notes: string) => void;
+  onGeneratePlan: () => void;
+  planLoading: boolean;
 }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(emptyDraft());
@@ -187,6 +195,16 @@ export function GoalsScreen({
           </div>
         ),
       )}
+
+      <button
+        className="btn primary"
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 14 }}
+        onClick={onGeneratePlan}
+        disabled={planLoading}
+      >
+        {planLoading && <span className="spinner" style={{ borderColor: "rgba(246,244,238,0.35)", borderTopColor: "#f6f4ee" }} />}
+        {planLoading ? "Generating your week…" : "Generate plan"}
+      </button>
 
       {adding ? (
         <div className="goal-card goal-form" style={{ flexDirection: "column", alignItems: "stretch", gap: 14 }}>
@@ -339,6 +357,18 @@ export function GoalsScreen({
           + Add a goal or commitment
         </button>
       )}
+
+      <div style={{ marginTop: 20 }}>
+        <p className="field-label">Anything Tend should know?</p>
+        <textarea
+          placeholder="e.g. I have two kids, keep mornings flexible. No exercise before 6am."
+          value={notes}
+          onChange={(e) => onNotesChange(e.target.value)}
+          rows={3}
+          style={{ ...inputStyle, resize: "vertical" }}
+        />
+        <p className="field-hint">Shared with the planner every time you tap "Generate plan".</p>
+      </div>
     </div>
   );
 }

@@ -79,6 +79,8 @@ export interface GeneratePlanRequest {
   /** Number of days to generate, default 7 */
   days?: number;
   quality?: PlanQuality;
+  /** Free-text preferences/special instructions from the user, e.g. "I have two kids, keep mornings flexible." */
+  notes?: string;
 }
 
 export interface GeneratePlanResponse {
