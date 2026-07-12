@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import type { CalendarEvent, Goal, PlanQuality } from "../types";
-import { getSeedGoals } from "../data/seed";
 import { getMonday, toISODate } from "../lib/date";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -25,10 +24,12 @@ function loadQuality(): PlanQuality {
 }
 
 export function usePlanner() {
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const langRef = useRef(lang);
   langRef.current = lang;
-  const [goals, setGoals] = useState<Goal[]>(() => loadOrSeed(GOALS_KEY, getSeedGoals(lang)));
+  const tRef = useRef(t);
+  tRef.current = t;
+  const [goals, setGoals] = useState<Goal[]>(() => loadOrSeed<Goal[]>(GOALS_KEY, []));
   const [events, setEvents] = useState<CalendarEvent[]>(() => loadOrSeed<CalendarEvent[]>(EVENTS_KEY, []));
   const [quality, setQualityState] = useState<PlanQuality>(loadQuality);
   const [notes, setNotesState] = useState<string>(() => localStorage.getItem(NOTES_KEY) ?? "");
@@ -78,7 +79,7 @@ export function usePlanner() {
       const data = (await res.json()) as { events: CalendarEvent[] };
       applyEvents(data.events);
     } catch (err) {
-      setPlanError(err instanceof Error ? err.message : "Failed to generate this week's plan");
+      setPlanError(err instanceof Error ? err.message : tRef.current.app.genericPlanError);
     } finally {
       setPlanLoading(false);
     }

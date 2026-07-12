@@ -17,7 +17,7 @@ const EVENT_SCHEMA: Anthropic.Tool.InputSchema = {
           date: { type: "string", description: "ISO date, e.g. 2026-07-13" },
           startTime: { type: "string", description: "24-hour HH:mm" },
           durationMinutes: { type: "integer" },
-          autoAdded: { type: "boolean", description: "true for breakfast/lunch/dinner Tend adds on its own" },
+          autoAdded: { type: "boolean", description: "true for events Tend adds on its own, not requested by the user" },
           locked: { type: "boolean", description: "true for fixed commitments that must not move" },
         },
         required: ["id", "title", "category", "date", "startTime", "durationMinutes"],
@@ -32,11 +32,6 @@ const EVENT_SCHEMA: Anthropic.Tool.InputSchema = {
 const MODEL_BY_QUALITY: Record<string, string> = {
   careful: "claude-opus-4-8",
   fast: "claude-sonnet-5",
-};
-
-const MEAL_NAMES: Record<Lang, { breakfast: string; lunch: string; dinner: string }> = {
-  en: { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" },
-  tr: { breakfast: "Kahvaltı", lunch: "Öğle Yemeği", dinner: "Akşam Yemeği" },
 };
 
 const LANGUAGE_INSTRUCTION: Record<Lang, string> = {
@@ -61,7 +56,6 @@ function buildSystemPrompt(dates: string[], notes: string | undefined, lang: Lan
       return `${date} (${weekday})`;
     })
     .join("\n");
-  const meals = MEAL_NAMES[lang];
 
   return `You are Tend's scheduling assistant. Given a list of goals, generate a concrete calendar of events covering exactly these dates:
 ${dayLines}
@@ -71,7 +65,6 @@ Rules:
 - If a goal has startTime, use it exactly for every occurrence. Otherwise pick a time that fits its timePreference (morning ~7-11, afternoon ~12-17, evening ~17-21, any = your choice) and don't overlap other events that day.
 - Goals with kind "fixed" produce events with locked: true. Other goals produce locked: false or omitted.
 - Set goalId to the originating goal's id on every event produced from a goal.
-- Always add ${meals.breakfast} (~07:30, 30 min), ${meals.lunch} (~12:30, 30 min), and ${meals.dinner} (~19:00, 45 min) each day as separate events with category "human" and autoAdded: true, unless a fixed/locked event already occupies that slot — skip or shift slightly to avoid overlap in that case.
 - Never produce two events for the same date whose time ranges overlap.
 - Give every event a unique id, e.g. "ev-<goalId or slug>-<date>".
 - ${LANGUAGE_INSTRUCTION[lang]} Do not translate the user's own goal titles — keep those exactly as given.

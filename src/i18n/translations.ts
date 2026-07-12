@@ -11,6 +11,7 @@ const en = {
     regenerate: "Regenerate",
     planning: "Planning…",
     generateError: (msg: string) => `Couldn't generate plan: ${msg}`,
+    genericPlanError: "Failed to generate this week's plan",
   },
   languagePicker: {
     subtitle: "Choose your language / Dilinizi seçin",
@@ -45,19 +46,29 @@ const en = {
   },
   onboarding: {
     title: "Welcome to Tend",
-    subtitle: "A calendar that plans itself around your life — and re-plans when life doesn't cooperate.",
-    step1Title: "Set your goals",
-    step1Body: "Work, exercise, family time — anything you want to make room for, on whatever schedule fits.",
-    step2Title: 'Tap "Generate plan"',
-    step2Body: "Tend turns your goals into a real week — fitting everything in, nothing overlapping.",
-    step3Title: "Tell the Assistant when life happens",
-    step3Body: "Running late? Something came up? Say so, and Tend re-plans your day around it.",
+    subtitle: "What makes Tend different from a regular calendar:",
+    swipeHint: "Swipe for more →",
+    cards: [
+      {
+        title: "You give it goals, not a schedule",
+        body: 'Other calendars just show you what you type in. Tend works backwards from what you want — "exercise 3x a week," "family dinner most nights" — and builds the actual schedule for you.',
+      },
+      {
+        title: "Every goal has a kind",
+        body: 'Fixed goals (like work) are locked to their time and never move. Recurring goals (like a workout habit) repeat on whatever days or frequency you set. Flexible goals fit in wherever there\'s room that week. You\'ll pick one of these for each goal you add — it\'s how Tend knows what it\'s allowed to move around.',
+      },
+      {
+        title: "One tap builds your whole week",
+        body: 'Add your goals once, tap "Generate plan," and Tend lays out every day — nothing overlapping, fixed things protected, everything else fit in around them. Building it can take up to 30 seconds.',
+      },
+      {
+        title: "It re-plans when life happens",
+        body: "Running late? Something came up? Tell the Assistant in plain language, and Tend adjusts the rest of your day around it — no manual reshuffling.",
+      },
+    ],
     qualityLabel: "Plan quality",
     qualityHint:
       "Careful is more consistent but slower (~25s). Fast is quicker but less careful about overlaps and preferences. You can change this anytime from the Assistant tab.",
-    notesLabel: "Anything Tend should know?",
-    notesPlaceholder: "e.g. I have two kids, keep mornings flexible. No exercise before 6am.",
-    notesHint: "Optional — shared with the planner every time it builds your week. Edit anytime from Goals.",
     continueButton: "Let's set up your goals",
   },
   quality: {
@@ -113,6 +124,7 @@ const en = {
     notesLabel: "Anything Tend should know?",
     notesPlaceholder: "e.g. I have two kids, keep mornings flexible. No exercise before 6am.",
     notesHint: 'Shared with the planner every time you tap "Generate plan".',
+    generateHint: "Building your week can take up to 30 seconds.",
   },
   timePreference: {
     morning: "Morning",
@@ -180,6 +192,7 @@ const tr: typeof en = {
     regenerate: "Yeniden Oluştur",
     planning: "Planlanıyor…",
     generateError: (msg: string) => `Plan oluşturulamadı: ${msg}`,
+    genericPlanError: "Bu haftanın planı oluşturulamadı",
   },
   languagePicker: {
     subtitle: "Choose your language / Dilinizi seçin",
@@ -218,19 +231,29 @@ const tr: typeof en = {
   },
   onboarding: {
     title: "Tend'e Hoş Geldiniz",
-    subtitle: "Hayatınıza göre kendi kendine plan yapan — ve işler ters gittiğinde yeniden planlayan bir takvim.",
-    step1Title: "Hedeflerinizi belirleyin",
-    step1Body: "İş, spor, aile zamanı — programınıza uyacak şekilde yer ayırmak istediğiniz her şey.",
-    step2Title: '"Plan oluştur"a dokunun',
-    step2Body: "Tend, hedeflerinizi gerçek bir haftaya dönüştürür — her şeyi sığdırır, hiçbir şey çakışmaz.",
-    step3Title: "Bir şey olduğunda Asistan'a söyleyin",
-    step3Body: "Geç mi kaldınız? Beklenmedik bir şey mi oldu? Söyleyin, Tend gününüzü ona göre yeniden planlasın.",
+    subtitle: "Tend'i normal bir takvimden ayıran şeyler:",
+    swipeHint: "Daha fazlası için kaydırın →",
+    cards: [
+      {
+        title: "Program değil, hedef verirsiniz",
+        body: 'Diğer takvimler yalnızca yazdıklarınızı gösterir. Tend, istediğiniz şeylerden geriye doğru çalışır — "haftada 3 kez spor", "çoğu akşam aile yemeği" — ve gerçek programı sizin için oluşturur.',
+      },
+      {
+        title: "Her hedefin bir türü vardır",
+        body: "Sabit hedefler (iş gibi) saatine kilitlenir ve asla taşınmaz. Tekrarlayan hedefler (bir spor alışkanlığı gibi) belirlediğiniz gün veya sıklıkta tekrar eder. Esnek hedefler o hafta yer bulunan her yere sığar. Eklediğiniz her hedef için bunlardan birini seçersiniz — Tend'in neyi taşıyabileceğini bu şekilde anlar.",
+      },
+      {
+        title: "Tek dokunuşla tüm haftanız hazır",
+        body: 'Hedeflerinizi bir kez ekleyin, "Plan oluştur"a dokunun, Tend her günü düzenlesin — hiçbir şey çakışmadan, sabit olanlar korunarak, geri kalan her şey etrafına sığdırılarak. Oluşturulması 30 saniyeye kadar sürebilir.',
+      },
+      {
+        title: "Bir şey olduğunda yeniden planlar",
+        body: "Geç mi kaldınız? Beklenmedik bir şey mi oldu? Sade bir dille Asistan'a söyleyin, Tend gününüzün geri kalanını buna göre ayarlasın — elle yeniden düzenlemeye gerek kalmadan.",
+      },
+    ],
     qualityLabel: "Plan kalitesi",
     qualityHint:
       "Dikkatli mod daha tutarlı ama daha yavaştır (~25 sn). Hızlı mod daha çabuk ama çakışmalara ve tercihlere daha az özen gösterir. Bunu istediğiniz zaman Asistan sekmesinden değiştirebilirsiniz.",
-    notesLabel: "Tend'in bilmesi gereken bir şey var mı?",
-    notesPlaceholder: "örn. İki çocuğum var, sabahları esnek bırakın. Sabah 6'dan önce spor yok.",
-    notesHint: "İsteğe bağlı — haftanızı her oluşturduğunda plancıyla paylaşılır. İstediğiniz zaman Hedefler'den düzenleyebilirsiniz.",
     continueButton: "Hedeflerimi belirleyelim",
   },
   quality: {
@@ -286,6 +309,7 @@ const tr: typeof en = {
     notesLabel: "Tend'in bilmesi gereken bir şey var mı?",
     notesPlaceholder: "örn. İki çocuğum var, sabahları esnek bırakın. Sabah 6'dan önce spor yok.",
     notesHint: '"Plan oluştur"a her dokunduğunuzda plancıyla paylaşılır.',
+    generateHint: "Haftanızın oluşturulması 30 saniyeye kadar sürebilir.",
   },
   timePreference: {
     morning: "Sabah",

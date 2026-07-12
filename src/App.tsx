@@ -53,8 +53,6 @@ function App() {
       <OnboardingScreen
         quality={quality}
         onQualityChange={setQuality}
-        notes={notes}
-        onNotesChange={setNotes}
         onComplete={() => {
           completeOnboarding();
           setTab("goals");

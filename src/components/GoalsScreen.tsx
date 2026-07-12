@@ -337,14 +337,14 @@ export function GoalsScreen({
           style={{
             width: "100%",
             marginTop: 14,
-            border: "1.5px dashed var(--line)",
+            border: "none",
             borderRadius: 16,
-            padding: 13,
+            padding: 16,
             textAlign: "center",
-            fontSize: 13,
-            color: "var(--muted)",
-            fontWeight: 600,
-            background: "none",
+            fontSize: 14.5,
+            color: "#f6f4ee",
+            fontWeight: 700,
+            background: "var(--accent)",
             cursor: "pointer",
           }}
         >
@@ -373,6 +373,9 @@ export function GoalsScreen({
         {planLoading && <span className="spinner" style={{ borderColor: "rgba(246,244,238,0.35)", borderTopColor: "#f6f4ee" }} />}
         {planLoading ? t.goals.generating : t.goals.generatePlan}
       </button>
+      <p className="field-hint" style={{ textAlign: "center" }}>
+        {t.goals.generateHint}
+      </p>
     </div>
   );
 }
