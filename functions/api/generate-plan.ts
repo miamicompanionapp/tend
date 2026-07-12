@@ -13,7 +13,10 @@ const EVENT_SCHEMA: Anthropic.Tool.InputSchema = {
           id: { type: "string" },
           goalId: { type: "string", description: "id of the goal this event fulfills, if any" },
           title: { type: "string" },
-          category: { type: "string", enum: ["work", "health", "home", "social", "human"] },
+          category: {
+            type: "string",
+            enum: ["work", "health", "home", "family", "social", "finance", "learning", "rest", "human"],
+          },
           date: { type: "string", description: "ISO date, e.g. 2026-07-13" },
           startTime: { type: "string", description: "24-hour HH:mm" },
           durationMinutes: { type: "integer" },
@@ -65,6 +68,7 @@ Rules:
 - If a goal has startTime, use it exactly for every occurrence. Otherwise pick a time that fits its timePreference (morning ~7-11, afternoon ~12-17, evening ~17-21, any = your choice) and don't overlap other events that day.
 - Goals with kind "fixed" produce events with locked: true. Other goals produce locked: false or omitted.
 - Set goalId to the originating goal's id on every event produced from a goal.
+- Categorize every event using whichever of these best fits its title and purpose: "work" (job/career), "health" (exercise, medical, self-care), "home" (chores, errands, home maintenance), "family" (time with kids/partner/parents/relatives), "social" (friends, community, events), "finance" (bills, budgeting, financial admin), "learning" (courses, reading, hobbies, personal growth), "rest" (leisure, relaxation, unstructured downtime), or "human" (baseline needs like meals or short breaks, if the user or their notes call for them).
 - Never produce two events for the same date whose time ranges overlap.
 - Give every event a unique id, e.g. "ev-<goalId or slug>-<date>".
 - ${LANGUAGE_INSTRUCTION[lang]} Do not translate the user's own goal titles — keep those exactly as given.

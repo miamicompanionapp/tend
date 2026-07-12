@@ -25,7 +25,10 @@ const DIFF_SCHEMA: Anthropic.Tool.InputSchema = {
               id: { type: "string", description: "same as eventId for 'moved'; a new unique id for 'added'" },
               goalId: { type: "string" },
               title: { type: "string" },
-              category: { type: "string", enum: ["work", "health", "home", "social", "human"] },
+              category: {
+                type: "string",
+                enum: ["work", "health", "home", "family", "social", "finance", "learning", "rest", "human"],
+              },
               date: { type: "string", description: "ISO date, e.g. 2026-07-13" },
               startTime: { type: "string", description: "24-hour HH:mm" },
               durationMinutes: { type: "integer" },
@@ -70,6 +73,7 @@ Decide the changes needed to fully accommodate the disruption:
 - Each diff entry needs a clear one-sentence reason a person would find satisfying, referencing priority or the disruption itself.
 - eventId must match an id from the provided events list (or the goal id, for a cancelled recurring instance that isn't yet a concrete event).
 - For "moved" entries, include an 'event' object with the full resulting event: same id as eventId, same title/category/durationMinutes unless those genuinely changed, and the new date/startTime. For "added" entries, include an 'event' object with a new unique id. Omit 'event' for "cancelled" and "kept".
+- When an 'event' object needs a category, pick whichever of these best fits: "work" (job/career), "health" (exercise, medical, self-care), "home" (chores, errands, home maintenance), "family" (time with kids/partner/parents/relatives), "social" (friends, community, events), "finance" (bills, budgeting, financial admin), "learning" (courses, reading, hobbies, personal growth), "rest" (leisure, relaxation, unstructured downtime), or "human" (baseline needs like meals or short breaks).
 - ${LANGUAGE_INSTRUCTION[lang]} Do not translate the user's own existing event/goal titles — keep those exactly as given.
 - Before you finalize your answer, work through the arithmetic explicitly for every event you move or add: does the exact date+startTime you chose fall before the current date+time given above? If a first attempt at a slot lands in the past (e.g. "move it 90 minutes earlier" would start before now), that attempt is invalid — do not use it. Find an actual valid slot (later the same day, or a different day) instead, and only then write your final answer.
 ${notes ? `- The user gave these standing preferences/constraints when setting up their goals — they apply here too, not just at initial plan creation. Honor them whenever they don't conflict with a fixed/locked goal: "${notes}"\n` : ""}- Output only via the tool call — no prose outside it.`;

@@ -12,6 +12,11 @@
   --good: #5c7a52;
   --good-soft: #e7ede1;
   --now-line: #d64545;
+  --family: #a8496f;
+  --social: #a67c1f;
+  --finance: #3f5a8c;
+  --learning: #6b4f95;
+  --rest: #8a6f4f;
   color-scheme: light dark;
 }
 
@@ -30,6 +35,11 @@
     --good: #93b085;
     --good-soft: #232a20;
     --now-line: #ef6b62;
+    --family: #d98bab;
+    --social: #d1a94a;
+    --finance: #8fa8d6;
+    --learning: #ab8fd1;
+    --rest: #c9ab7f;
   }
 }
 
@@ -359,12 +369,6 @@ body {
   align-items: center;
   gap: 12px;
 }
-.goal-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
 .goal-body {
   flex: 1;
   min-width: 0;
@@ -513,9 +517,21 @@ body {
 .day-track-event.home {
   border-left-color: var(--warm);
 }
+.day-track-event.family {
+  border-left-color: var(--family);
+}
 .day-track-event.social {
-  border-left-color: var(--accent);
+  border-left-color: var(--social);
   font-weight: 700;
+}
+.day-track-event.finance {
+  border-left-color: var(--finance);
+}
+.day-track-event.learning {
+  border-left-color: var(--learning);
+}
+.day-track-event.rest {
+  border-left-color: var(--rest);
 }
 .day-track-event.inset {
   z-index: 1;

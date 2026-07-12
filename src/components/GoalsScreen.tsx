@@ -1,15 +1,7 @@
 import { useState, type CSSProperties } from "react";
-import type { Category, Goal, GoalKind, Priority, RepeatFreq, TimePreference } from "../types";
+import type { Goal, GoalKind, Priority, RepeatFreq, TimePreference } from "../types";
 import { describeGoalSchedule } from "../lib/schedule";
 import { useLanguage } from "../i18n/LanguageContext";
-
-const DOT_COLOR: Record<Goal["category"], string> = {
-  work: "var(--accent)",
-  health: "var(--good)",
-  home: "var(--warm)",
-  social: "var(--accent)",
-  human: "var(--muted)",
-};
 
 const CHIP_CLASS: Record<GoalKind, string> = {
   fixed: "chip-fixed",
@@ -17,7 +9,8 @@ const CHIP_CLASS: Record<GoalKind, string> = {
   flexible: "chip-flexible",
 };
 
-const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
+const DURATION_HOUR_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const DURATION_MINUTE_OPTIONS = [0, 15, 30, 45];
 
 const inputStyle: CSSProperties = {
   border: "1px solid var(--line)",
@@ -57,7 +50,6 @@ function Segmented<T extends string>({
 function emptyDraft() {
   return {
     title: "",
-    category: "home" as Category,
     priority: "medium" as Priority,
     kind: "flexible" as GoalKind,
     freq: "weekly" as RepeatFreq,
@@ -96,13 +88,6 @@ export function GoalsScreen({
     { kind: "fixed", label: t.goals.groupFixed },
     { kind: "recurring", label: t.goals.groupRecurring },
     { kind: "flexible", label: t.goals.groupFlexible },
-  ];
-
-  const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
-    { value: "work", label: t.goals.categoryWork },
-    { value: "health", label: t.goals.categoryHealth },
-    { value: "home", label: t.goals.categoryHome },
-    { value: "social", label: t.goals.categorySocial },
   ];
 
   const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
@@ -168,7 +153,6 @@ export function GoalsScreen({
       id: `goal-${Date.now()}`,
       title: draft.title.trim(),
       kind: draft.kind,
-      category: draft.category,
       priority: draft.priority,
       repeat,
       durationMinutes: draft.durationMinutes,
@@ -223,7 +207,6 @@ export function GoalsScreen({
             <p className="goal-group-label">{group.label}</p>
             {group.goals.map((goal) => (
               <div className="goal-card" key={goal.id}>
-                <span className="goal-dot" style={{ background: DOT_COLOR[goal.category] }} />
                 <div className="goal-body">
                   <p className="goal-title">{goal.title}</p>
                   <p className="goal-meta">{describeGoalSchedule(goal, lang)}</p>
@@ -249,11 +232,6 @@ export function GoalsScreen({
               style={inputStyle}
               autoFocus
             />
-          </div>
-
-          <div>
-            <p className="field-label">{t.goals.categoryLabel}</p>
-            <Segmented options={CATEGORY_OPTIONS} value={draft.category} onChange={(v) => update("category", v)} />
           </div>
 
           <div>
@@ -340,17 +318,38 @@ export function GoalsScreen({
 
           <div>
             <p className="field-label">{t.goals.durationLabel}</p>
-            <select
-              value={draft.durationMinutes}
-              onChange={(e) => update("durationMinutes", Number(e.target.value))}
-              style={inputStyle}
-            >
-              {DURATION_OPTIONS.map((min) => (
-                <option key={min} value={min}>
-                  {min < 60 ? t.goals.durationMin(min) : t.goals.durationHr(min / 60)}
-                </option>
-              ))}
-            </select>
+            <div style={{ display: "flex", gap: 8 }}>
+              <select
+                value={Math.floor(draft.durationMinutes / 60)}
+                onChange={(e) => {
+                  const hours = Number(e.target.value);
+                  const minutes = draft.durationMinutes % 60;
+                  update("durationMinutes", Math.max(15, hours * 60 + minutes));
+                }}
+                style={inputStyle}
+              >
+                {DURATION_HOUR_OPTIONS.map((h) => (
+                  <option key={h} value={h}>
+                    {t.goals.durationHr(h)}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={draft.durationMinutes % 60}
+                onChange={(e) => {
+                  const minutes = Number(e.target.value);
+                  const hours = Math.floor(draft.durationMinutes / 60);
+                  update("durationMinutes", Math.max(15, hours * 60 + minutes));
+                }}
+                style={inputStyle}
+              >
+                {DURATION_MINUTE_OPTIONS.map((m) => (
+                  <option key={m} value={m}>
+                    {t.goals.durationMin(m)}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="action-row">

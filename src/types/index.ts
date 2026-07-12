@@ -4,7 +4,7 @@ export type GoalKind = "fixed" | "recurring" | "flexible";
 
 export type Priority = "high" | "medium" | "low";
 
-export type Category = "work" | "health" | "home" | "social" | "human";
+export type Category = "work" | "health" | "home" | "family" | "social" | "finance" | "learning" | "rest" | "human";
 
 /** How a goal repeats, modeled like a calendar-app repeat picker. */
 export type RepeatFreq = "once" | "daily" | "weekdays" | "weekly" | "monthly";
@@ -23,7 +23,6 @@ export interface Goal {
   id: string;
   title: string;
   kind: GoalKind;
-  category: Category;
   priority: Priority;
   repeat: Repeat;
   /** Set when the goal happens at a specific clock time (e.g. Work, a class). */
