@@ -88,6 +88,7 @@ export function GoalsScreen({
   planLoading: boolean;
 }) {
   const { t, lang } = useLanguage();
+  const [step, setStep] = useState<"goals" | "notes">("goals");
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(emptyDraft());
 
@@ -177,8 +178,45 @@ export function GoalsScreen({
     setAdding(false);
   }
 
+  if (step === "notes") {
+    return (
+      <div>
+        <div className="step-header">
+          <button className="step-back" onClick={() => setStep("goals")} aria-label={t.goals.backAria}>
+            ←
+          </button>
+        </div>
+        <p className="step-intro">{t.goals.stepNotesIntro}</p>
+
+        <textarea
+          placeholder={t.goals.notesPlaceholder}
+          value={notes}
+          onChange={(e) => onNotesChange(e.target.value)}
+          rows={5}
+          autoFocus
+          style={{ ...inputStyle, resize: "vertical" }}
+        />
+
+        <button
+          className="btn primary"
+          style={{ width: "100%", marginTop: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+          onClick={onGeneratePlan}
+          disabled={planLoading}
+        >
+          {planLoading && <span className="spinner" style={{ borderColor: "rgba(246,244,238,0.35)", borderTopColor: "#f6f4ee" }} />}
+          {planLoading ? t.goals.generating : t.goals.generatePlan}
+        </button>
+        <p className="field-hint" style={{ textAlign: "center" }}>
+          {t.goals.generateHint}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div>
+      <p className="step-intro">{t.goals.stepGoalsIntro}</p>
+
       {grouped.map((group) =>
         group.goals.length === 0 ? null : (
           <div key={group.kind}>
@@ -352,30 +390,9 @@ export function GoalsScreen({
         </button>
       )}
 
-      <div style={{ marginTop: 20, marginBottom: 20 }}>
-        <p className="field-label">{t.goals.notesLabel}</p>
-        <textarea
-          placeholder={t.goals.notesPlaceholder}
-          value={notes}
-          onChange={(e) => onNotesChange(e.target.value)}
-          rows={3}
-          style={{ ...inputStyle, resize: "vertical" }}
-        />
-        <p className="field-hint">{t.goals.notesHint}</p>
-      </div>
-
-      <button
-        className="btn primary"
-        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-        onClick={onGeneratePlan}
-        disabled={planLoading}
-      >
-        {planLoading && <span className="spinner" style={{ borderColor: "rgba(246,244,238,0.35)", borderTopColor: "#f6f4ee" }} />}
-        {planLoading ? t.goals.generating : t.goals.generatePlan}
+      <button className="btn primary" style={{ width: "100%", marginTop: 20 }} onClick={() => setStep("notes")}>
+        {t.goals.continueButton}
       </button>
-      <p className="field-hint" style={{ textAlign: "center" }}>
-        {t.goals.generateHint}
-      </p>
     </div>
   );
 }
