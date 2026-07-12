@@ -157,6 +157,17 @@ export function AssistantScreen({
             )}
           </div>
         ))}
+        {loading && (
+          <div className="bubble-row">
+            <div className="bubble ai">
+              <span className="typing-dots">
+                <span />
+                <span />
+                <span />
+              </span>
+            </div>
+          </div>
+        )}
         {pendingDiff && (
           <div className="action-row">
             <button className="btn secondary" onClick={() => setPendingDiff(null)}>
@@ -176,7 +187,7 @@ export function AssistantScreen({
           onKeyDown={(e) => e.key === "Enter" && send()}
         />
         <button className="composer-send" onClick={send} aria-label={t.assistant.sendAria} disabled={loading}>
-          ↑
+          {loading ? <span className="spinner" style={{ borderColor: "rgba(246,244,238,0.35)", borderTopColor: "#f6f4ee" }} /> : "↑"}
         </button>
       </div>
     </div>
