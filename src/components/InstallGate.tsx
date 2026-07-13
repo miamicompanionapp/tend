@@ -8,6 +8,8 @@ import {
   type InstallPlatform,
 } from "../lib/pwa";
 import { useLanguage } from "../i18n/LanguageContext";
+import { Logo } from "./Logo";
+import { track } from "../lib/analytics";
 
 export function InstallGate({ children }: { children: ReactNode }) {
   const { t } = useLanguage();
@@ -33,6 +35,7 @@ export function InstallGate({ children }: { children: ReactNode }) {
     platform === "ios" ? t.installGate.iosSteps : platform === "desktop" ? t.installGate.desktopSteps : t.installGate.androidSteps[browser];
 
   function continueInBrowser() {
+    track("install_gate_bypassed", { platform });
     localStorage.setItem(INSTALL_BYPASS_KEY, "1");
     setInstalled(true);
   }
@@ -41,7 +44,7 @@ export function InstallGate({ children }: { children: ReactNode }) {
     <div className="app-shell">
       <div className="onboarding">
         <div className="onboarding-content">
-          <p className="install-gate-icon">📅</p>
+          <Logo size={40} className="install-gate-icon" />
           <p className="app-name" style={{ fontSize: 26, margin: "0 0 4px" }}>
             {t.installGate.title}
           </p>

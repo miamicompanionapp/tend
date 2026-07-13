@@ -1,8 +1,21 @@
 import type { CalendarEvent } from "../types";
 
-export const START_HOUR = 5;
-export const END_HOUR = 23;
+export const DEFAULT_START_HOUR = 6;
+export const DEFAULT_END_HOUR = 23;
 export const HOUR_HEIGHT = 52;
+
+/** 6:00-23:00 by default, widened outward to fit any event that starts earlier or ends later. */
+export function getHourRange(events: CalendarEvent[]): { start: number; end: number } {
+  let start = DEFAULT_START_HOUR;
+  let end = DEFAULT_END_HOUR;
+  for (const event of events) {
+    const startMinutes = minutesOf(event.startTime);
+    const endMinutes = startMinutes + event.durationMinutes;
+    start = Math.min(start, Math.floor(startMinutes / 60));
+    end = Math.max(end, Math.ceil(endMinutes / 60));
+  }
+  return { start, end };
+}
 
 export interface LaidOutEvent {
   event: CalendarEvent;
@@ -20,8 +33,8 @@ function minutesOf(time: string): number {
 }
 
 /** Vertical offset in px for a given clock time within the grid's hour range. */
-export function offsetForTime(time: string): number {
-  return ((minutesOf(time) - START_HOUR * 60) / 60) * HOUR_HEIGHT;
+export function offsetForTime(time: string, startHour: number): number {
+  return ((minutesOf(time) - startHour * 60) / 60) * HOUR_HEIGHT;
 }
 
 interface TimedItem {
@@ -71,9 +84,9 @@ function assignColumns(items: TimedItem[]): { item: TimedItem; col: number; colC
   return withCol.map((w) => ({ ...w, colCount }));
 }
 
-function pxFor(item: TimedItem): { top: number; height: number } {
+function pxFor(item: TimedItem, startHour: number): { top: number; height: number } {
   return {
-    top: ((item.start - START_HOUR * 60) / 60) * HOUR_HEIGHT,
+    top: ((item.start - startHour * 60) / 60) * HOUR_HEIGHT,
     height: Math.max(((item.end - item.start) / 60) * HOUR_HEIGHT - 2, 20),
   };
 }
@@ -94,7 +107,7 @@ const INSET_WIDTH_FACTOR = 0.62;
  * side-by-side column split (greedy, not globally optimal, but good
  * enough for a handful of daily events).
  */
-export function layoutDay(events: CalendarEvent[]): LaidOutEvent[] {
+export function layoutDay(events: CalendarEvent[], startHour: number): LaidOutEvent[] {
   const clusters = clusterByOverlap(toTimedItems(events));
   const out: LaidOutEvent[] = [];
 
@@ -119,7 +132,7 @@ export function layoutDay(events: CalendarEvent[]): LaidOutEvent[] {
     const baseByItem = new Map(baseLayout.map((b) => [b.item, b]));
 
     for (const b of baseLayout) {
-      out.push({ event: b.item.event, ...pxFor(b.item), leftPct: (b.col / b.colCount) * 100, widthPct: 100 / b.colCount });
+      out.push({ event: b.item.event, ...pxFor(b.item, startHour), leftPct: (b.col / b.colCount) * 100, widthPct: 100 / b.colCount });
     }
 
     const insetsByHost = new Map<TimedItem, TimedItem[]>();
@@ -139,7 +152,7 @@ export function layoutDay(events: CalendarEvent[]): LaidOutEvent[] {
       for (const w of assignColumns(insets)) {
         out.push({
           event: w.item.event,
-          ...pxFor(w.item),
+          ...pxFor(w.item, startHour),
           leftPct: bandLeftPct + (w.col / w.colCount) * bandWidthPct,
           widthPct: bandWidthPct / w.colCount,
           inset: true,

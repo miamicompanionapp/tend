@@ -4,10 +4,15 @@ import './index.css'
 import App from './App.tsx'
 import { InstallGate } from './components/InstallGate.tsx'
 import { LanguagePicker } from './components/LanguagePicker.tsx'
+import { AdminScreen } from './components/AdminScreen.tsx'
 import { LanguageProvider, loadLang } from './i18n/LanguageContext.tsx'
 
 function Root() {
   const [languageChosen, setLanguageChosen] = useState(() => loadLang() !== null)
+
+  if (new URLSearchParams(window.location.search).get('admin') === '1') {
+    return <AdminScreen />
+  }
 
   if (!languageChosen) {
     return <LanguagePicker onChoose={() => setLanguageChosen(true)} />

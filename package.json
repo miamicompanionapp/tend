@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:functions": "wrangler pages dev --proxy 5173 -- npm:dev",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"

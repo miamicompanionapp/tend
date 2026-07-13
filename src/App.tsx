@@ -5,15 +5,22 @@ import { TodayScreen } from "./components/TodayScreen";
 import { WeekScreen } from "./components/WeekScreen";
 import { AssistantScreen } from "./components/AssistantScreen";
 import { OnboardingScreen } from "./components/OnboardingScreen";
+import { Logo } from "./components/Logo";
+import { Toast, type ToastState } from "./components/Toast";
 import { usePlanner } from "./state/usePlanner";
 import { addDays, getMonday, todayISODate, toISODate } from "./lib/date";
 import { applyDiff } from "./lib/diff";
 import type { PlanDiffEntry } from "./types";
 import { useLanguage } from "./i18n/LanguageContext";
+import { track } from "./lib/analytics";
 
 function App() {
   const { t, lang } = useLanguage();
-  const [tab, setTab] = useState<TabId>("today");
+  const [tab, setTabState] = useState<TabId>("today");
+  const setTab = (next: TabId) => {
+    track("tab_change", { tab: next });
+    setTabState(next);
+  };
   const {
     goals,
     events,
@@ -27,11 +34,15 @@ function App() {
     removeGoal,
     applyEvents,
     regeneratePlan,
+    generateWeek,
     planLoading,
-    planError,
+    weekGenLoading,
   } = usePlanner();
 
-  const weekStart = useMemo(() => toISODate(getMonday(new Date())), []);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const currentWeekStart = useMemo(() => toISODate(getMonday(new Date())), []);
+  const viewedWeekStart = useMemo(() => addDays(currentWeekStart, weekOffset * 7), [currentWeekStart, weekOffset]);
   const today = todayISODate();
   const todayEvents = useMemo(() => events.filter((e) => e.date === today), [events, today]);
 
@@ -43,10 +54,30 @@ function App() {
       new Date(`${iso}T00:00:00`).toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" });
     if (tab === "today") return fmtDay(today);
     const fmt = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString(locale, { month: "short", day: "numeric" });
-    return `${fmt(weekStart)} – ${fmt(addDays(weekStart, 6))}`;
-  }, [tab, today, weekStart, locale, t]);
+    return `${fmt(viewedWeekStart)} – ${fmt(addDays(viewedWeekStart, 6))}`;
+  }, [tab, today, viewedWeekStart, locale, t]);
 
   const handleApplyDiff = (diff: PlanDiffEntry[]) => applyEvents(applyDiff(events, diff));
+
+  async function handleRegenerate() {
+    const { ok, error } = await regeneratePlan();
+    track("plan_generated", { ok, weeks: 4 });
+    setToast(
+      ok
+        ? { type: "success", message: t.toast.planReady, actionLabel: t.toast.viewWeek, onAction: () => { setWeekOffset(0); setTab("week"); } }
+        : { type: "error", message: error || t.app.genericPlanError },
+    );
+  }
+
+  async function handleGenerateWeek(startDate: string) {
+    const { ok, error } = await generateWeek(startDate);
+    track("week_generated", { ok });
+    setToast(
+      ok
+        ? { type: "success", message: t.toast.weekReady, actionLabel: t.toast.viewWeek, onAction: () => setTab("week") }
+        : { type: "error", message: error || t.app.genericPlanError },
+    );
+  }
 
   if (!onboarded) {
     return (
@@ -64,11 +95,14 @@ function App() {
   return (
     <div className="app-shell">
       <div className="app-bar">
-        <span className="app-name">Tend</span>
+        <span className="app-name" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Logo size={22} />
+          Tend
+        </span>
         <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
           {(tab === "today" || tab === "week") && (
             <button
-              onClick={() => regeneratePlan()}
+              onClick={handleRegenerate}
               disabled={planLoading}
               style={{
                 display: "flex",
@@ -91,9 +125,6 @@ function App() {
           <span className="app-subtitle">{subtitle}</span>
         </div>
       </div>
-      {planError && (tab === "today" || tab === "week") && (
-        <p style={{ margin: 0, padding: "0 16px 10px", fontSize: 11.5, color: "var(--warm)" }}>{t.app.generateError(planError)}</p>
-      )}
       <div className={`app-content${tab === "assistant" ? " app-content-flush" : ""}`}>
         {tab === "goals" && (
           <GoalsScreen
@@ -102,12 +133,23 @@ function App() {
             onRemove={removeGoal}
             notes={notes}
             onNotesChange={setNotes}
-            onGeneratePlan={regeneratePlan}
+            onGeneratePlan={handleRegenerate}
             planLoading={planLoading}
           />
         )}
-        {tab === "today" && <TodayScreen events={events} loading={planLoading} onGeneratePlan={regeneratePlan} />}
-        {tab === "week" && <WeekScreen events={events} weekStart={weekStart} onGeneratePlan={regeneratePlan} />}
+        {tab === "today" && <TodayScreen events={events} loading={planLoading} onGeneratePlan={handleRegenerate} />}
+        {tab === "week" && (
+          <WeekScreen
+            events={events}
+            weekStart={viewedWeekStart}
+            weekOffset={weekOffset}
+            onPrevWeek={() => setWeekOffset((o) => o - 1)}
+            onNextWeek={() => setWeekOffset((o) => o + 1)}
+            onGeneratePlan={handleRegenerate}
+            onGenerateWeek={handleGenerateWeek}
+            weekGenLoading={weekGenLoading}
+          />
+        )}
         {tab === "assistant" && (
           <AssistantScreen
             goals={goals}
@@ -120,6 +162,7 @@ function App() {
         )}
       </div>
       <TabBar active={tab} onChange={setTab} />
+      {toast && <Toast toast={toast} onDismiss={() => setToast(null)} />}
     </div>
   );
 }

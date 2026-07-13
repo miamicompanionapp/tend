@@ -10,7 +10,6 @@ const en = {
   app: {
     regenerate: "Regenerate",
     planning: "Planning…",
-    generateError: (msg: string) => `Couldn't generate plan: ${msg}`,
     genericPlanError: "Failed to generate this week's plan",
   },
   languagePicker: {
@@ -146,6 +145,19 @@ const en = {
   week: {
     noPlan: "No plan yet. Set up your goals, then generate a plan for the week.",
     generatePlan: "Generate plan",
+    generateThisWeek: "Generate this week",
+    notPlannedYet: "No plan for this week yet.",
+    pastEmpty: "Nothing was planned for this week.",
+    tooFarAhead: "You can generate this week once it's within the next 4 weeks.",
+    prevWeek: "Previous week",
+    nextWeek: "Next week",
+  },
+  toast: {
+    planReady: "Your 4-week plan is ready.",
+    planFailed: "Couldn't generate your plan. Please try again.",
+    weekReady: "This week's plan is ready.",
+    weekFailed: "Couldn't generate this week's plan.",
+    viewWeek: "View week",
   },
   assistant: {
     planQuality: "Plan quality",
@@ -194,7 +206,6 @@ const tr: typeof en = {
   app: {
     regenerate: "Yeniden Oluştur",
     planning: "Planlanıyor…",
-    generateError: (msg: string) => `Plan oluşturulamadı: ${msg}`,
     genericPlanError: "Bu haftanın planı oluşturulamadı",
   },
   languagePicker: {
@@ -334,6 +345,19 @@ const tr: typeof en = {
   week: {
     noPlan: "Henüz bir plan yok. Önce hedeflerinizi belirleyin, sonra hafta için bir plan oluşturun.",
     generatePlan: "Plan oluştur",
+    generateThisWeek: "Bu haftayı oluştur",
+    notPlannedYet: "Bu hafta için henüz bir plan yok.",
+    pastEmpty: "Bu hafta için bir şey planlanmamış.",
+    tooFarAhead: "Bu hafta önümüzdeki 4 hafta içine girdiğinde plan oluşturabilirsiniz.",
+    prevWeek: "Önceki hafta",
+    nextWeek: "Sonraki hafta",
+  },
+  toast: {
+    planReady: "4 haftalık planınız hazır.",
+    planFailed: "Planınız oluşturulamadı. Lütfen tekrar deneyin.",
+    weekReady: "Bu haftanın planı hazır.",
+    weekFailed: "Bu haftanın planı oluşturulamadı.",
+    viewWeek: "Haftayı görüntüle",
   },
   assistant: {
     planQuality: "Plan kalitesi",

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type { PlanQuality } from "../types";
 import { useLanguage } from "../i18n/LanguageContext";
+import { track } from "../lib/analytics";
 
 export function OnboardingScreen({
   quality,
@@ -27,6 +28,7 @@ export function OnboardingScreen({
 
   function goNext() {
     if (isLast) {
+      track("onboarding_completed", { quality });
       onComplete();
       return;
     }

@@ -95,6 +95,8 @@ export interface GeneratePlanRequest {
   /** Free-text preferences/special instructions from the user, e.g. "I have two kids, keep mornings flexible." */
   notes?: string;
   language?: Lang;
+  /** Events already scheduled elsewhere in the plan (outside this date range) — so goals like "once a month" aren't duplicated across separate per-week requests. */
+  existingEvents?: CalendarEvent[];
 }
 
 export interface GeneratePlanResponse {

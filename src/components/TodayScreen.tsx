@@ -1,6 +1,6 @@
 import type { CalendarEvent } from "../types";
 import { todayISODate } from "../lib/date";
-import { HOUR_HEIGHT } from "../lib/timeGridLayout";
+import { HOUR_HEIGHT, getHourRange } from "../lib/timeGridLayout";
 import { HourRuler } from "./HourRuler";
 import { DayTrack } from "./DayTrack";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -16,7 +16,9 @@ export function TodayScreen({
 }) {
   const { t } = useLanguage();
   const today = todayISODate();
-  const hasEvents = events.some((e) => e.date === today);
+  const todayEvents = events.filter((e) => e.date === today);
+  const hasEvents = todayEvents.length > 0;
+  const { start: startHour, end: endHour } = getHourRange(todayEvents);
 
   if (!hasEvents) {
     return (
@@ -42,8 +44,8 @@ export function TodayScreen({
         backgroundPosition: "0 1px",
       }}
     >
-      <HourRuler />
-      <DayTrack date={today} events={events} />
+      <HourRuler startHour={startHour} endHour={endHour} />
+      <DayTrack date={today} events={events} startHour={startHour} endHour={endHour} />
     </div>
   );
 }

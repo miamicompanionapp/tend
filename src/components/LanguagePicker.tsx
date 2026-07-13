@@ -1,5 +1,6 @@
 import { useLanguage } from "../i18n/LanguageContext";
 import type { Lang } from "../types";
+import { Logo } from "./Logo";
 
 export function LanguagePicker({ onChoose }: { onChoose: () => void }) {
   const { t, setLang } = useLanguage();
@@ -13,6 +14,7 @@ export function LanguagePicker({ onChoose }: { onChoose: () => void }) {
     <div className="app-shell">
       <div className="onboarding" style={{ justifyContent: "center" }}>
         <div style={{ textAlign: "center", padding: "0 24px" }}>
+          <Logo size={44} className="install-gate-icon" />
           <p className="app-name" style={{ fontSize: 30, margin: "0 0 8px" }}>
             Tend
           </p>

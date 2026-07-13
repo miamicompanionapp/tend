@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export interface Env {
   ANTHROPIC_API_KEY: string;
+  DB: D1Database;
+  ADMIN_TOKEN: string;
 }
 
 export function getClient(env: Env): Anthropic {

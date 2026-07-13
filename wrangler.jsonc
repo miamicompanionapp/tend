@@ -3,5 +3,12 @@
   "name": "tend",
   "compatibility_date": "2026-07-01",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "dist"
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tend-db",
+      "database_id": "6bbfd96a-07a3-4b53-b568-b1c2db4f562c"
+    }
+  ]
 }

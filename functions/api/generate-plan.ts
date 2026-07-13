@@ -1,6 +1,12 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { getClient, jsonResponse, type Env } from "./_lib/claude";
-import type { CalendarEvent, GeneratePlanRequest, Lang } from "../../src/types";
+import { logAiRequest } from "./_lib/db";
+import { findOverlaps, describeConflicts } from "./_lib/conflicts";
+import { DIFF_SCHEMA, buildReplanSystemPrompt } from "./_lib/replanCore";
+import { applyDiff } from "../../src/lib/diff";
+import type { CalendarEvent, GeneratePlanRequest, Goal, Lang, PlanDiffEntry } from "../../src/types";
+
+const MAX_CONFLICT_RETRIES = 2;
 
 const EVENT_SCHEMA: Anthropic.Tool.InputSchema = {
   type: "object",
@@ -52,13 +58,20 @@ function dateRange(startDate: string, days: number): string[] {
   });
 }
 
-function buildSystemPrompt(dates: string[], notes: string | undefined, lang: Lang): string {
+function buildSystemPrompt(dates: string[], notes: string | undefined, lang: Lang, existingEvents: CalendarEvent[] | undefined): string {
   const dayLines = dates
     .map((date) => {
       const weekday = new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
       return `${date} (${weekday})`;
     })
     .join("\n");
+
+  const existingLines =
+    existingEvents && existingEvents.length > 0
+      ? `\nThese events are already scheduled elsewhere in the plan, outside this date range — do not create another occurrence for a goal that already appears here unless its repeat pattern genuinely calls for more than one within this range (e.g. "weekly" or "daily"):\n${existingEvents
+          .map((e) => `- goalId ${e.goalId ?? "(none)"}: "${e.title}" on ${e.date}`)
+          .join("\n")}\n`
+      : "";
 
   return `You are Tend's scheduling assistant. Given a list of goals, generate a concrete calendar of events covering exactly these dates:
 ${dayLines}
@@ -69,13 +82,52 @@ Rules:
 - Goals with kind "fixed" produce events with locked: true. Other goals produce locked: false or omitted.
 - Set goalId to the originating goal's id on every event produced from a goal.
 - Categorize every event using whichever of these best fits its title and purpose: "work" (job/career), "health" (exercise, medical, self-care), "home" (chores, errands, home maintenance), "family" (time with kids/partner/parents/relatives), "social" (friends, community, events), "finance" (bills, budgeting, financial admin), "learning" (courses, reading, hobbies, personal growth), "rest" (leisure, relaxation, unstructured downtime), or "human" (baseline needs like meals or short breaks, if the user or their notes call for them).
-- Never produce two events for the same date whose time ranges overlap.
+- Never produce two events for the same date whose time ranges overlap. Double-check every date's events against each other before finalizing — this is a hard requirement, not a preference.
 - Give every event a unique id, e.g. "ev-<goalId or slug>-<date>".
 - ${LANGUAGE_INSTRUCTION[lang]} Do not translate the user's own goal titles — keep those exactly as given.
-${notes ? `- The user gave these special instructions/preferences — follow them whenever they don't conflict with a fixed/locked goal: "${notes}"\n` : ""}- Output only via the tool call — no prose.`;
+${existingLines}${notes ? `- The user gave these special instructions/preferences — follow them whenever they don't conflict with a fixed/locked goal: "${notes}"\n` : ""}- Output only via the tool call — no prose.`;
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+/**
+ * Last-resort fallback when the retry loop in onRequestPost still leaves overlaps:
+ * reuses replan's own conflict-resolution prompt/schema (the same one used for
+ * user-described disruptions), treating the remaining overlaps as a synthetic
+ * disruption to resolve by moving/cancelling the lower-priority, non-locked event.
+ */
+async function resolveRemainingConflicts(
+  client: Anthropic,
+  events: CalendarEvent[],
+  goals: Goal[],
+  lang: Lang,
+): Promise<CalendarEvent[]> {
+  const conflicts = findOverlaps(events);
+  if (conflicts.length === 0) return events;
+
+  const response = await client.messages.create({
+    model: "claude-opus-4-8",
+    max_tokens: 4096,
+    system: buildReplanSystemPrompt(lang, undefined, undefined),
+    thinking: { type: "adaptive" },
+    messages: [
+      {
+        role: "user",
+        content: `Disruption: the generated calendar below still has scheduling conflicts after two automatic fix attempts. Resolve them now.\n\nGoals:\n${JSON.stringify(goals, null, 2)}\n\nThis batch's events:\n${JSON.stringify(events, null, 2)}\n\nConflicts to resolve:\n${describeConflicts(conflicts)}\n\nWork through the scheduling arithmetic, then call return_replan with your final answer.`,
+      },
+    ],
+    tools: [{ name: "return_replan", description: "Return the proposed plan changes", input_schema: DIFF_SCHEMA }],
+    tool_choice: { type: "auto" },
+  });
+
+  const toolUse = response.content.find((block) => block.type === "tool_use");
+  if (!toolUse || toolUse.type !== "tool_use") return events;
+
+  const result = toolUse.input as { summary: string; diff: PlanDiffEntry[] };
+  return applyDiff(events, result.diff);
+}
+
+export const onRequestPost: PagesFunction<Env> = async (context) => {
+  const { request, env } = context;
+  const startedAt = Date.now();
   let body: GeneratePlanRequest;
   try {
     body = await request.json();
@@ -99,35 +151,76 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return jsonResponse({ error: (err as Error).message }, 500);
   }
 
-  try {
-    const response = await client.messages.create({
-      model,
-      max_tokens: 8192,
-      system: buildSystemPrompt(dates, body.notes, language),
-      messages: [
-        {
-          role: "user",
-          content: `Goals:\n${JSON.stringify(body.goals, null, 2)}`,
-        },
-      ],
-      tools: [
-        {
-          name: "return_plan",
-          description: "Return the generated calendar events",
-          input_schema: EVENT_SCHEMA,
-        },
-      ],
-      tool_choice: { type: "tool", name: "return_plan" },
-    });
+  const tool: Anthropic.Tool = { name: "return_plan", description: "Return the generated calendar events", input_schema: EVENT_SCHEMA };
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: `Goals:\n${JSON.stringify(body.goals, null, 2)}` }];
 
-    const toolUse = response.content.find((block) => block.type === "tool_use");
-    if (!toolUse || toolUse.type !== "tool_use") {
-      return jsonResponse({ error: "Claude did not return a plan" }, 502);
+  try {
+    let events: CalendarEvent[] = [];
+    let retriesUsed = 0;
+
+    // Claude is told never to overlap two events, but it's not a real constraint
+    // solver — it can still slip on a big batch. Rather than trust the first
+    // answer, deterministically check it and give Claude up to two chances to
+    // fix just the specific conflicts found, before falling back to replan's
+    // dedicated conflict-resolution prompt as a last resort.
+    for (let attempt = 0; ; attempt++) {
+      const response = await client.messages.create({
+        model,
+        max_tokens: 8192,
+        system: buildSystemPrompt(dates, body.notes, language, body.existingEvents),
+        messages,
+        tools: [tool],
+        tool_choice: { type: "tool", name: "return_plan" },
+      });
+
+      const toolUse = response.content.find((block) => block.type === "tool_use");
+      if (!toolUse || toolUse.type !== "tool_use") {
+        context.waitUntil(
+          logAiRequest(env, { endpoint: "generate-plan", model, quality: body.quality, requestBody: body, success: false, error: "Claude did not return a plan", durationMs: Date.now() - startedAt }),
+        );
+        return jsonResponse({ error: "Claude did not return a plan" }, 502);
+      }
+
+      events = (toolUse.input as { events: CalendarEvent[] }).events;
+      const conflicts = findOverlaps(events);
+      if (conflicts.length === 0 || attempt >= MAX_CONFLICT_RETRIES) break;
+
+      retriesUsed++;
+      messages.push({ role: "assistant", content: response.content });
+      messages.push({
+        role: "user",
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: toolUse.id,
+            content: `These events overlap:\n${describeConflicts(conflicts)}\n\nFix only these — keep every other event exactly as is. Move or shrink the lower-priority, non-locked event to a free slot the same day (or a different day if there's truly no room); never move a locked event. Call return_plan again with the FULL corrected list of all ${events.length} events, not just the ones you changed.`,
+          },
+        ],
+      });
     }
 
-    const events = (toolUse.input as { events: CalendarEvent[] }).events;
+    const remaining = findOverlaps(events);
+    if (remaining.length > 0) {
+      events = await resolveRemainingConflicts(client, events, body.goals, language);
+    }
+
+    context.waitUntil(
+      logAiRequest(env, {
+        endpoint: "generate-plan",
+        model,
+        quality: body.quality,
+        requestBody: body,
+        responseBody: { events, conflictRetries: retriesUsed, resolvedViaReplan: remaining.length > 0 },
+        success: true,
+        durationMs: Date.now() - startedAt,
+      }),
+    );
     return jsonResponse({ events });
   } catch (err) {
-    return jsonResponse({ error: (err as Error).message }, 502);
+    const message = (err as Error).message;
+    context.waitUntil(
+      logAiRequest(env, { endpoint: "generate-plan", model, quality: body.quality, requestBody: body, success: false, error: message, durationMs: Date.now() - startedAt }),
+    );
+    return jsonResponse({ error: message }, 502);
   }
 };

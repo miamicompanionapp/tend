@@ -4,6 +4,7 @@ import { requestReplan } from "../lib/replan";
 import { useLanguage } from "../i18n/LanguageContext";
 import { formatEventSlot } from "../lib/schedule";
 import { nowLocalISO } from "../lib/date";
+import { track } from "../lib/analytics";
 
 interface DisplayDiffEntry extends PlanDiffEntry {
   beforeDisplay?: string;
@@ -69,6 +70,7 @@ export function AssistantScreen({
 
     setTurns((prev) => [...prev, { role: "user", text: message }]);
     setLoading(true);
+    track("assistant_message_sent");
     try {
       const response = await requestReplan({ message, goals, events, language: lang, now: nowLocalISO(), history, notes: notes || undefined });
       // Compute before/after display from the real event data (not the AI's
@@ -96,6 +98,7 @@ export function AssistantScreen({
 
   function applyPendingDiff() {
     if (!pendingDiff) return;
+    track("assistant_diff_applied", { entries: pendingDiff.length });
     onApplyDiff(pendingDiff);
     if (pendingDiffIndex !== null) {
       setTurns((prev) => prev.map((turn, i) => (i === pendingDiffIndex ? { ...turn, applied: true } : turn)));

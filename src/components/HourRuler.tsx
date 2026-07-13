@@ -1,5 +1,5 @@
 import { useLanguage } from "../i18n/LanguageContext";
-import { END_HOUR, HOUR_HEIGHT, START_HOUR } from "../lib/timeGridLayout";
+import { HOUR_HEIGHT } from "../lib/timeGridLayout";
 
 function hourLabel(hour: number, lang: "en" | "tr"): string {
   if (lang === "tr") return `${hour}:00`;
@@ -8,13 +8,13 @@ function hourLabel(hour: number, lang: "en" | "tr"): string {
   return `${h12}${period}`;
 }
 
-export function HourRuler() {
+export function HourRuler({ startHour, endHour }: { startHour: number; endHour: number }) {
   const { lang } = useLanguage();
-  const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
+  const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i);
   return (
-    <div className="hour-ruler" style={{ height: (END_HOUR - START_HOUR) * HOUR_HEIGHT }}>
+    <div className="hour-ruler" style={{ height: (endHour - startHour) * HOUR_HEIGHT }}>
       {hours.map((hour) => (
-        <span className="hour-ruler-label" key={hour} style={{ top: (hour - START_HOUR) * HOUR_HEIGHT }}>
+        <span className="hour-ruler-label" key={hour} style={{ top: (hour - startHour) * HOUR_HEIGHT }}>
           {hourLabel(hour, lang)}
         </span>
       ))}

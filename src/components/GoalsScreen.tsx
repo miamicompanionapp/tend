@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from "react";
 import type { Goal, GoalKind, Priority, RepeatFreq, TimePreference } from "../types";
 import { describeGoalSchedule } from "../lib/schedule";
 import { useLanguage } from "../i18n/LanguageContext";
+import { track } from "../lib/analytics";
 
 const CHIP_CLASS: Record<GoalKind, string> = {
   fixed: "chip-fixed",
@@ -158,6 +159,7 @@ export function GoalsScreen({
       durationMinutes: draft.durationMinutes,
       ...(draft.timeMode === "specific" ? { startTime: draft.startTime } : { timePreference: draft.timePreference }),
     });
+    track("goal_added", { kind: draft.kind, priority: draft.priority, freq: repeat.freq });
     setDraft(emptyDraft());
     setAdding(false);
   }
@@ -212,7 +214,14 @@ export function GoalsScreen({
                   <p className="goal-meta">{describeGoalSchedule(goal, lang)}</p>
                 </div>
                 <span className={`goal-chip ${CHIP_CLASS[goal.kind]}`}>{chipLabel(goal)}</span>
-                <button className="goal-remove" onClick={() => onRemove(goal.id)} aria-label={t.goals.removeAria(goal.title)}>
+                <button
+                  className="goal-remove"
+                  onClick={() => {
+                    track("goal_removed", { kind: goal.kind });
+                    onRemove(goal.id);
+                  }}
+                  aria-label={t.goals.removeAria(goal.title)}
+                >
                   ×
                 </button>
               </div>
