@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CalendarEvent, Goal, PlanDiffEntry, PlanQuality, ReplanHistoryTurn } from "../types";
 import { requestReplan } from "../lib/replan";
 import { useLanguage } from "../i18n/LanguageContext";
 import { formatEventSlot } from "../lib/schedule";
 import { nowLocalISO } from "../lib/date";
 import { track } from "../lib/analytics";
+
+const TURNS_KEY = "tend.assistantTurns";
+const PENDING_KEY = "tend.assistantPending";
 
 interface DisplayDiffEntry extends PlanDiffEntry {
   beforeDisplay?: string;
@@ -35,6 +38,24 @@ function describeDiffForHistory(diff: DisplayDiffEntry[], applied: boolean): str
   return `Proposed changes:\n${lines.join("\n")}\n${status}`;
 }
 
+function loadTurns(): Turn[] {
+  try {
+    const raw = localStorage.getItem(TURNS_KEY);
+    return raw ? (JSON.parse(raw) as Turn[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadPending(): { diff: PlanDiffEntry[] | null; index: number | null } {
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    return raw ? JSON.parse(raw) : { diff: null, index: null };
+  } catch {
+    return { diff: null, index: null };
+  }
+}
+
 export function AssistantScreen({
   goals,
   events,
@@ -51,11 +72,19 @@ export function AssistantScreen({
   onQualityChange: (q: PlanQuality) => void;
 }) {
   const { t, lang } = useLanguage();
-  const [turns, setTurns] = useState<Turn[]>([]);
+  const [turns, setTurns] = useState<Turn[]>(loadTurns);
   const [input, setInput] = useState("");
-  const [pendingDiff, setPendingDiff] = useState<PlanDiffEntry[] | null>(null);
-  const [pendingDiffIndex, setPendingDiffIndex] = useState<number | null>(null);
+  const [pendingDiff, setPendingDiff] = useState<PlanDiffEntry[] | null>(() => loadPending().diff);
+  const [pendingDiffIndex, setPendingDiffIndex] = useState<number | null>(() => loadPending().index);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(TURNS_KEY, JSON.stringify(turns));
+  }, [turns]);
+
+  useEffect(() => {
+    localStorage.setItem(PENDING_KEY, JSON.stringify({ diff: pendingDiff, index: pendingDiffIndex }));
+  }, [pendingDiff, pendingDiffIndex]);
 
   async function send() {
     const message = input.trim();
