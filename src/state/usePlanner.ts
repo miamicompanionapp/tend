@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import type { CalendarEvent, Goal, PlanQuality } from "../types";
 import { addDays, getMonday, toISODate } from "../lib/date";
 import { replaceRange } from "../lib/planMerge";
+import { sessionId } from "../lib/analytics";
 import { useLanguage } from "../i18n/LanguageContext";
 
 const PLAN_HORIZON_WEEKS = 4;
@@ -69,6 +70,7 @@ export function usePlanner() {
         notes: notesRef.current || undefined,
         language: langRef.current,
         existingEvents,
+        sessionId: sessionId(),
       }),
     });
     if (!res.ok) {

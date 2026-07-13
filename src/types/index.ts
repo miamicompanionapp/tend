@@ -75,6 +75,8 @@ export interface ReplanRequest {
   history?: ReplanHistoryTurn[];
   /** Same free-text preferences sent to generate-plan — ongoing concerns/directions the user gave, not just for initial creation. */
   notes?: string;
+  /** Per-install id (see lib/analytics.ts), so admin logs can be grouped by user/device. */
+  sessionId?: string;
 }
 
 export interface ReplanResponse {
@@ -97,6 +99,8 @@ export interface GeneratePlanRequest {
   language?: Lang;
   /** Events already scheduled elsewhere in the plan (outside this date range) — so goals like "once a month" aren't duplicated across separate per-week requests. */
   existingEvents?: CalendarEvent[];
+  /** Per-install id (see lib/analytics.ts), so admin logs can be grouped by user/device. */
+  sessionId?: string;
 }
 
 export interface GeneratePlanResponse {

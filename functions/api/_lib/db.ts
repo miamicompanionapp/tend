@@ -11,13 +11,15 @@ export async function logAiRequest(
     success: boolean;
     error?: string;
     durationMs: number;
+    sessionId?: string;
+    userAgent?: string;
   },
 ): Promise<void> {
   if (!env.DB) return;
   try {
     await env.DB.prepare(
-      `INSERT INTO ai_request_logs (id, endpoint, model, quality, request_body, response_body, success, error, duration_ms, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO ai_request_logs (id, endpoint, model, quality, request_body, response_body, success, error, duration_ms, created_at, session_id, user_agent)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         crypto.randomUUID(),
@@ -30,6 +32,8 @@ export async function logAiRequest(
         entry.error ?? null,
         entry.durationMs,
         new Date().toISOString(),
+        entry.sessionId ?? null,
+        entry.userAgent ?? null,
       )
       .run();
   } catch {

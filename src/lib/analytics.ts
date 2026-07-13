@@ -1,6 +1,7 @@
 const SESSION_KEY = "tend.sessionId";
 
-function sessionId(): string {
+/** Per-install id, persisted forever in localStorage — lets admin logs group requests by user/device. */
+export function sessionId(): string {
   let id = localStorage.getItem(SESSION_KEY);
   if (!id) {
     id = crypto.randomUUID();

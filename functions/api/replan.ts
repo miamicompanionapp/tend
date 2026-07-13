@@ -27,6 +27,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const language: Lang = body.language === "tr" ? "tr" : "en";
   const historyMessages = (body.history ?? []).map((h) => ({ role: h.role, content: h.content }));
   const model = "claude-opus-4-8";
+  const logCtx = { sessionId: body.sessionId, userAgent: request.headers.get("user-agent") ?? undefined };
 
   try {
     const response = await client.messages.create({
@@ -54,20 +55,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const toolUse = response.content.find((block) => block.type === "tool_use");
     if (!toolUse || toolUse.type !== "tool_use") {
       context.waitUntil(
-        logAiRequest(env, { endpoint: "replan", model, requestBody: body, success: false, error: "Claude did not return a replan", durationMs: Date.now() - startedAt }),
+        logAiRequest(env, { endpoint: "replan", model, requestBody: body, success: false, error: "Claude did not return a replan", durationMs: Date.now() - startedAt, ...logCtx }),
       );
       return jsonResponse({ error: "Claude did not return a replan" }, 502);
     }
 
     const result = toolUse.input as { summary: string; diff: PlanDiffEntry[] };
     context.waitUntil(
-      logAiRequest(env, { endpoint: "replan", model, requestBody: body, responseBody: result, success: true, durationMs: Date.now() - startedAt }),
+      logAiRequest(env, { endpoint: "replan", model, requestBody: body, responseBody: result, success: true, durationMs: Date.now() - startedAt, ...logCtx }),
     );
     return jsonResponse(result);
   } catch (err) {
     const message = (err as Error).message;
     context.waitUntil(
-      logAiRequest(env, { endpoint: "replan", model, requestBody: body, success: false, error: message, durationMs: Date.now() - startedAt }),
+      logAiRequest(env, { endpoint: "replan", model, requestBody: body, success: false, error: message, durationMs: Date.now() - startedAt, ...logCtx }),
     );
     return jsonResponse({ error: message }, 502);
   }

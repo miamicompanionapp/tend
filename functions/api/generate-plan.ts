@@ -143,6 +143,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const dates = dateRange(body.startDate, days);
   const model = (body.quality && MODEL_BY_QUALITY[body.quality]) || MODEL_BY_QUALITY.careful;
   const language: Lang = body.language === "tr" ? "tr" : "en";
+  const logCtx = { sessionId: body.sessionId, userAgent: request.headers.get("user-agent") ?? undefined };
 
   let client;
   try {
@@ -176,7 +177,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       const toolUse = response.content.find((block) => block.type === "tool_use");
       if (!toolUse || toolUse.type !== "tool_use") {
         context.waitUntil(
-          logAiRequest(env, { endpoint: "generate-plan", model, quality: body.quality, requestBody: body, success: false, error: "Claude did not return a plan", durationMs: Date.now() - startedAt }),
+          logAiRequest(env, { endpoint: "generate-plan", model, quality: body.quality, requestBody: body, success: false, error: "Claude did not return a plan", durationMs: Date.now() - startedAt, ...logCtx }),
         );
         return jsonResponse({ error: "Claude did not return a plan" }, 502);
       }
@@ -213,13 +214,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         responseBody: { events, conflictRetries: retriesUsed, resolvedViaReplan: remaining.length > 0 },
         success: true,
         durationMs: Date.now() - startedAt,
+        ...logCtx,
       }),
     );
     return jsonResponse({ events });
   } catch (err) {
     const message = (err as Error).message;
     context.waitUntil(
-      logAiRequest(env, { endpoint: "generate-plan", model, quality: body.quality, requestBody: body, success: false, error: message, durationMs: Date.now() - startedAt }),
+      logAiRequest(env, { endpoint: "generate-plan", model, quality: body.quality, requestBody: body, success: false, error: message, durationMs: Date.now() - startedAt, ...logCtx }),
     );
     return jsonResponse({ error: message }, 502);
   }

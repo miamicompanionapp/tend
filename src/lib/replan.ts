@@ -1,5 +1,6 @@
 import type { ReplanRequest, ReplanResponse } from "../types";
 import { addDays } from "./date";
+import { sessionId } from "./analytics";
 import { translations } from "../i18n/translations";
 
 /**
@@ -16,7 +17,7 @@ export async function requestReplan(req: ReplanRequest): Promise<ReplanResponse>
     const res = await fetch("/api/replan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(req),
+      body: JSON.stringify({ ...req, sessionId: sessionId() }),
     });
     if (res.ok) return res.json();
   } catch {
