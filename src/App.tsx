@@ -69,6 +69,12 @@ function App() {
     );
   }
 
+  async function handleGenerateFromGoals() {
+    const result = await regeneratePlan();
+    track("plan_generated", { ok: result.ok, weeks: 4, source: "goals" });
+    return result;
+  }
+
   async function handleGenerateWeek(startDate: string) {
     const { ok, error } = await generateWeek(startDate);
     track("week_generated", { ok });
@@ -133,7 +139,8 @@ function App() {
             onRemove={removeGoal}
             notes={notes}
             onNotesChange={setNotes}
-            onGeneratePlan={handleRegenerate}
+            onGeneratePlan={handleGenerateFromGoals}
+            onViewWeek={() => { setWeekOffset(0); setTab("week"); }}
             planLoading={planLoading}
           />
         )}

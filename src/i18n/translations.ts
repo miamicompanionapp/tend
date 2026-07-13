@@ -141,6 +141,7 @@ const en = {
     autoAdded: "Auto-added from your routine",
     fixed: "Fixed",
     minutes: (n: number) => `${n} min`,
+    closeAria: "Close",
   },
   week: {
     noPlan: "No plan yet. Set up your goals, then generate a plan for the week.",
@@ -341,6 +342,7 @@ const tr: typeof en = {
     autoAdded: "Rutininizden otomatik eklendi",
     fixed: "Sabit",
     minutes: (n: number) => `${n} dk`,
+    closeAria: "Kapat",
   },
   week: {
     noPlan: "Henüz bir plan yok. Önce hedeflerinizi belirleyin, sonra hafta için bir plan oluşturun.",

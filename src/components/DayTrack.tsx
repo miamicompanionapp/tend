@@ -7,7 +7,19 @@ import { useNow } from "../lib/useNow";
 import { useLanguage } from "../i18n/LanguageContext";
 
 /** One day's events, absolutely positioned by time, with a live current-time line if `date` is today. */
-export function DayTrack({ date, events, startHour, endHour }: { date: string; events: CalendarEvent[]; startHour: number; endHour: number }) {
+export function DayTrack({
+  date,
+  events,
+  startHour,
+  endHour,
+  onSelectEvent,
+}: {
+  date: string;
+  events: CalendarEvent[];
+  startHour: number;
+  endHour: number;
+  onSelectEvent: (event: CalendarEvent) => void;
+}) {
   const { lang } = useLanguage();
   const now = useNow();
   const isToday = date === todayISODate();
@@ -25,6 +37,7 @@ export function DayTrack({ date, events, startHour, endHour }: { date: string; e
           key={event.id}
           className={`day-track-event ${eventStyleClass(event)}${inset ? " inset" : ""}`}
           style={{ top, height, left: `${leftPct}%`, width: `calc(${widthPct}% - 4px)` }}
+          onClick={() => onSelectEvent(event)}
         >
           <p className="day-track-event-title">{event.title}</p>
           {height >= 34 && <p className="day-track-event-time">{formatTime(event.startTime, lang)}</p>}

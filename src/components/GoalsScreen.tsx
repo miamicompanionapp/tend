@@ -70,6 +70,7 @@ export function GoalsScreen({
   notes,
   onNotesChange,
   onGeneratePlan,
+  onViewWeek,
   planLoading,
 }: {
   goals: Goal[];
@@ -77,13 +78,21 @@ export function GoalsScreen({
   onRemove: (id: string) => void;
   notes: string;
   onNotesChange: (notes: string) => void;
-  onGeneratePlan: () => void;
+  onGeneratePlan: () => Promise<{ ok: boolean; error?: string }>;
+  onViewWeek: () => void;
   planLoading: boolean;
 }) {
   const { t, lang } = useLanguage();
   const [step, setStep] = useState<"goals" | "notes">("goals");
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(emptyDraft());
+  const [result, setResult] = useState<{ ok: boolean; error?: string } | null>(null);
+
+  async function handleGenerate() {
+    setResult(null);
+    const r = await onGeneratePlan();
+    setResult(r);
+  }
 
   const GROUP_ORDER: { kind: GoalKind; label: string }[] = [
     { kind: "fixed", label: t.goals.groupFixed },
@@ -186,15 +195,28 @@ export function GoalsScreen({
         <button
           className="btn primary"
           style={{ width: "100%", marginTop: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-          onClick={onGeneratePlan}
+          onClick={handleGenerate}
           disabled={planLoading}
         >
           {planLoading && <span className="spinner" style={{ borderColor: "rgba(246,244,238,0.35)", borderTopColor: "#f6f4ee" }} />}
           {planLoading ? t.goals.generating : t.goals.generatePlan}
         </button>
-        <p className="field-hint" style={{ textAlign: "center" }}>
-          {t.goals.generateHint}
-        </p>
+        {!planLoading && result && (
+          <div className={`generate-result ${result.ok ? "success" : "error"}`}>
+            <span className="generate-result-icon">{result.ok ? "✓" : "!"}</span>
+            <p className="generate-result-message">{result.ok ? t.toast.planReady : result.error || t.toast.planFailed}</p>
+            {result.ok && (
+              <button className="btn primary" style={{ width: "100%", marginTop: 12 }} onClick={onViewWeek}>
+                {t.toast.viewWeek}
+              </button>
+            )}
+          </div>
+        )}
+        {!result && (
+          <p className="field-hint" style={{ textAlign: "center" }}>
+            {t.goals.generateHint}
+          </p>
+        )}
       </div>
     );
   }

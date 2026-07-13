@@ -1,8 +1,10 @@
+import { useState } from "react";
 import type { CalendarEvent } from "../types";
 import { todayISODate } from "../lib/date";
 import { HOUR_HEIGHT, getHourRange } from "../lib/timeGridLayout";
 import { HourRuler } from "./HourRuler";
 import { DayTrack } from "./DayTrack";
+import { EventPopover } from "./EventPopover";
 import { useLanguage } from "../i18n/LanguageContext";
 
 export function TodayScreen({
@@ -19,6 +21,7 @@ export function TodayScreen({
   const todayEvents = events.filter((e) => e.date === today);
   const hasEvents = todayEvents.length > 0;
   const { start: startHour, end: endHour } = getHourRange(todayEvents);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   if (!hasEvents) {
     return (
@@ -37,15 +40,18 @@ export function TodayScreen({
   }
 
   return (
-    <div
-      className="day-grid"
-      style={{
-        backgroundImage: `repeating-linear-gradient(to bottom, var(--line) 0, var(--line) 1px, transparent 1px, transparent ${HOUR_HEIGHT}px)`,
-        backgroundPosition: "0 1px",
-      }}
-    >
-      <HourRuler startHour={startHour} endHour={endHour} />
-      <DayTrack date={today} events={events} startHour={startHour} endHour={endHour} />
+    <div>
+      <div
+        className="day-grid"
+        style={{
+          backgroundImage: `repeating-linear-gradient(to bottom, var(--line) 0, var(--line) 1px, transparent 1px, transparent ${HOUR_HEIGHT}px)`,
+          backgroundPosition: "0 1px",
+        }}
+      >
+        <HourRuler startHour={startHour} endHour={endHour} />
+        <DayTrack date={today} events={events} startHour={startHour} endHour={endHour} onSelectEvent={setSelectedEvent} />
+      </div>
+      {selectedEvent && <EventPopover event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </div>
   );
 }

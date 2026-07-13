@@ -4,6 +4,7 @@ import { addDays, todayISODate, weekdayLabel, weekdayNarrow } from "../lib/date"
 import { HOUR_HEIGHT, getHourRange } from "../lib/timeGridLayout";
 import { HourRuler } from "./HourRuler";
 import { DayTrack } from "./DayTrack";
+import { EventPopover } from "./EventPopover";
 import { useLanguage } from "../i18n/LanguageContext";
 
 const PLAN_HORIZON_WEEKS = 4;
@@ -28,6 +29,7 @@ export function WeekScreen({ events, weekStart, weekOffset, onPrevWeek, onNextWe
   const today = todayISODate();
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const [selected, setSelected] = useState(() => (days.includes(today) ? today : days[0]));
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
     setSelected(days.includes(today) ? today : days[0]);
@@ -103,7 +105,7 @@ export function WeekScreen({ events, weekStart, weekOffset, onPrevWeek, onNextWe
         ) : (
           <div className="day-grid" style={gridBackground}>
             <HourRuler startHour={startHour} endHour={endHour} />
-            <DayTrack date={selected} events={events} startHour={startHour} endHour={endHour} />
+            <DayTrack date={selected} events={events} startHour={startHour} endHour={endHour} onSelectEvent={setSelectedEvent} />
           </div>
         )}
       </div>
@@ -132,12 +134,14 @@ export function WeekScreen({ events, weekStart, weekOffset, onPrevWeek, onNextWe
             <HourRuler startHour={startHour} endHour={endHour} />
             {days.map((date) => (
               <div className="week-col" key={date}>
-                <DayTrack date={date} events={events} startHour={startHour} endHour={endHour} />
+                <DayTrack date={date} events={events} startHour={startHour} endHour={endHour} onSelectEvent={setSelectedEvent} />
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {selectedEvent && <EventPopover event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </div>
   );
 }
