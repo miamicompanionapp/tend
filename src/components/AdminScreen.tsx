@@ -43,6 +43,43 @@ function sessionShort(sessionId: string | null): string {
   return sessionId ? sessionId.slice(0, 8) : "no-session";
 }
 
+function parseBody(raw: string | null): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+interface LogGroup {
+  key: string;
+  logs: AiLogRow[];
+}
+
+/**
+ * The rolling plan generator fires one request per week (see usePlanner.ts),
+ * all sharing the same session/goals/notes and landing within seconds of each
+ * other. Collapsing consecutive rows that share those fields turns one
+ * "Generate plan" tap back into a single card instead of 4 near-duplicates.
+ */
+function groupLogs(logs: AiLogRow[]): LogGroup[] {
+  const groups: LogGroup[] = [];
+  for (const log of logs) {
+    const body = parseBody(log.request_body);
+    const notes = (body?.notes as string | undefined) ?? "";
+    const goals = body?.goals ? JSON.stringify(body.goals) : "";
+    const key = `${log.session_id ?? ""}|${log.endpoint}|${notes}|${goals}`;
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.logs.push(log);
+    } else {
+      groups.push({ key, logs: [log] });
+    }
+  }
+  return groups;
+}
+
 const page: React.CSSProperties = {
   minHeight: "100%",
   background: "#111",
@@ -104,6 +141,70 @@ function JsonBlock({ label, raw }: { label: string; raw: string | null }) {
   );
 }
 
+function LogRow({ log, expanded, onToggle }: { log: AiLogRow; expanded: boolean; onToggle: () => void }) {
+  return (
+    <div style={{ border: "1px solid #333", borderRadius: 6, padding: 10, marginBottom: 8 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer", flexWrap: "wrap" }} onClick={onToggle}>
+        <span style={{ color: log.success ? "#7dd87d" : "#f66" }}>{log.success ? "✓" : "✕"}</span>
+        <span style={{ fontWeight: 700 }}>{log.endpoint}</span>
+        <span style={{ color: "#888" }}>{log.model}</span>
+        <span style={{ color: "#888" }}>{log.quality}</span>
+        <span style={{ color: "#888" }}>{log.duration_ms}ms</span>
+        <span style={{ color: "#5b8dd6", border: "1px solid #2a4a6b", borderRadius: 4, padding: "1px 6px", fontSize: 11 }}>
+          {sessionShort(log.session_id)} · {deviceLabel(log.user_agent)}
+        </span>
+        <span style={{ marginLeft: "auto", color: "#666" }}>{log.created_at}</span>
+      </div>
+      {expanded && (
+        <div>
+          {log.error && <JsonBlock label="error" raw={JSON.stringify(log.error)} />}
+          <JsonBlock label="request" raw={log.request_body} />
+          <JsonBlock label="response" raw={log.response_body} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LogGroupCard({ group, expandedId, setExpandedId }: { group: LogGroup; expandedId: string | null; setExpandedId: (id: string | null) => void }) {
+  const [open, setOpen] = useState(false);
+
+  if (group.logs.length === 1) {
+    const log = group.logs[0];
+    return <LogRow log={log} expanded={expandedId === log.id} onToggle={() => setExpandedId(expandedId === log.id ? null : log.id)} />;
+  }
+
+  const first = group.logs[0];
+  const allSucceeded = group.logs.every((l) => l.success);
+  const body = parseBody(first.request_body);
+  const notes = (body?.notes as string | undefined) ?? "";
+  const totalMs = group.logs.reduce((sum, l) => sum + (l.duration_ms ?? 0), 0);
+
+  return (
+    <div style={{ border: "1px solid #333", borderRadius: 6, padding: 10, marginBottom: 8 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer", flexWrap: "wrap" }} onClick={() => setOpen(!open)}>
+        <span style={{ color: allSucceeded ? "#7dd87d" : "#f66" }}>{allSucceeded ? "✓" : "✕"}</span>
+        <span style={{ fontWeight: 700 }}>{first.endpoint}</span>
+        <span style={{ color: "#e8b04b", border: "1px solid #6b5a2a", borderRadius: 4, padding: "1px 6px", fontSize: 11 }}>×{group.logs.length} batch</span>
+        <span style={{ color: "#888" }}>{first.model}</span>
+        <span style={{ color: "#888" }}>{totalMs}ms total</span>
+        <span style={{ color: "#5b8dd6", border: "1px solid #2a4a6b", borderRadius: 4, padding: "1px 6px", fontSize: 11 }}>
+          {sessionShort(first.session_id)} · {deviceLabel(first.user_agent)}
+        </span>
+        <span style={{ marginLeft: "auto", color: "#666" }}>{first.created_at}</span>
+      </div>
+      {notes && <p style={{ margin: "8px 0 0", color: "#aaa", fontStyle: "italic" }}>notes: "{notes}"</p>}
+      {open && (
+        <div style={{ marginTop: 8 }}>
+          {group.logs.map((log) => (
+            <LogRow key={log.id} log={log} expanded={expandedId === log.id} onToggle={() => setExpandedId(expandedId === log.id ? null : log.id)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LogsTab({ token }: { token: string }) {
   const [logs, setLogs] = useState<AiLogRow[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -126,6 +227,7 @@ function LogsTab({ token }: { token: string }) {
   }));
 
   const visibleLogs = sessionFilter === "all" ? logs : logs.filter((l) => l.session_id === sessionFilter);
+  const groups = groupLogs(visibleLogs);
 
   return (
     <div>
@@ -143,27 +245,8 @@ function LogsTab({ token }: { token: string }) {
           ))}
         </select>
       )}
-      {visibleLogs.map((log) => (
-        <div key={log.id} style={{ border: "1px solid #333", borderRadius: 6, padding: 10, marginBottom: 8 }}>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer", flexWrap: "wrap" }} onClick={() => setExpanded(expanded === log.id ? null : log.id)}>
-            <span style={{ color: log.success ? "#7dd87d" : "#f66" }}>{log.success ? "✓" : "✕"}</span>
-            <span style={{ fontWeight: 700 }}>{log.endpoint}</span>
-            <span style={{ color: "#888" }}>{log.model}</span>
-            <span style={{ color: "#888" }}>{log.quality}</span>
-            <span style={{ color: "#888" }}>{log.duration_ms}ms</span>
-            <span style={{ color: "#5b8dd6", border: "1px solid #2a4a6b", borderRadius: 4, padding: "1px 6px", fontSize: 11 }}>
-              {sessionShort(log.session_id)} · {deviceLabel(log.user_agent)}
-            </span>
-            <span style={{ marginLeft: "auto", color: "#666" }}>{log.created_at}</span>
-          </div>
-          {expanded === log.id && (
-            <div>
-              {log.error && <JsonBlock label="error" raw={JSON.stringify(log.error)} />}
-              <JsonBlock label="request" raw={log.request_body} />
-              <JsonBlock label="response" raw={log.response_body} />
-            </div>
-          )}
-        </div>
+      {groups.map((group) => (
+        <LogGroupCard key={group.logs[0].id} group={group} expandedId={expanded} setExpandedId={setExpanded} />
       ))}
       {visibleLogs.length === 0 && <p style={{ color: "#666" }}>No AI requests logged yet.</p>}
     </div>
